@@ -1,0 +1,95 @@
+services:
+
+  postgres_donaciones:
+    image: postgres:16
+    container_name: postgres_donaciones
+    environment:
+      POSTGRES_DB: donaciones
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5432:5432"
+    networks:
+      - microservicios-net
+
+  postgres_inventario:
+    image: postgres:16
+    container_name: postgres_inventario
+    environment:
+      POSTGRES_DB: inventario
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5433:5432"
+    networks:
+      - microservicios-net
+
+  postgres_logistica:
+    image: postgres:16
+    container_name: postgres_logistica
+    environment:
+      POSTGRES_DB: logistica
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5434:5432"
+    networks:
+      - microservicios-net
+
+  donaciones:
+    build: ./services/donaciones
+    container_name: donaciones
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres_donaciones:5432/donaciones
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: admin123
+    depends_on:
+      - postgres_donaciones
+    networks:
+      - microservicios-net
+
+  inventario:
+    build: ./services/inventario
+    container_name: inventario
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres_inventario:5432/inventario
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: admin123
+    depends_on:
+      - postgres_inventario
+    networks:
+      - microservicios-net
+
+  logistica:
+    build: ./services/logistica
+    container_name: logistica
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres_logistica:5432/logistica
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: admin123
+    depends_on:
+      - postgres_logistica
+    networks:
+      - microservicios-net
+
+  gateway:
+    build: ./services/gateway
+    container_name: gateway
+    ports:
+      - "8080:8080"
+    networks:
+      - microservicios-net
+    depends_on:
+      - donaciones
+      - inventario
+      - logistica
+
+networks:
+  microservicios-net:
+    driver: bridge
