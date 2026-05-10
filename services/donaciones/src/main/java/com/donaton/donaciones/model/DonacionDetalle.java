@@ -14,4 +14,7 @@ public class DonacionDetalle extends Donacion {
     private Double cantidad;
 
     private String unidadMedida;
+
+    private String detalle;
+
 }

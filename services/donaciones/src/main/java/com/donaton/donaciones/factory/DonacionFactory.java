@@ -9,13 +9,14 @@ import com.donaton.donaciones.model.DonacionDetalle;
 @Component
 public class DonacionFactory {
 
-    public DonacionDetalle crearDonacion(String nombreDonante, String tipoDonacion, Double cantidad) {
+    public DonacionDetalle crearDonacion(String nombreDonante, String tipoDonacion, Double cantidad, String detalle) {
 
         DonacionDetalle donacion = new DonacionDetalle();
         donacion.setNombreDonante(nombreDonante);
         donacion.setFechaDonacion(LocalDateTime.now());
         donacion.setTipoDonacion(tipoDonacion.toUpperCase());
         donacion.setCantidad(cantidad);
+        donacion.setDetalle(detalle);
 
         // El factory decide la unidad de medida segun el tipo
         switch (tipoDonacion.toUpperCase()) {
