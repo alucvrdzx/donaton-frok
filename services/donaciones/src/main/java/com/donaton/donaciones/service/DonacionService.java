@@ -44,7 +44,8 @@ public class DonacionService {
     }
 
     public DonacionDetalle actualizar(Long id, DonacionDetalle d) {
-        DonacionDetalle actualizada = factory.crearDonacion(d.getNombreDonante(), d.getTipoDonacion(), d.getCantidad(), d.getDetalle());
+        DonacionDetalle actualizada = factory.crearDonacion(d.getNombreDonante(), d.getTipoDonacion(), d.getCantidad(),
+                d.getDetalle());
         actualizada.setId(id);
         return repository.save(actualizada);
     }
