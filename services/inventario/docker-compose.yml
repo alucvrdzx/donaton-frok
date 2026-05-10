@@ -1,0 +1,23 @@
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: postgres_inventario
+    environment:
+      POSTGRES_DB: donaton
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5433:5432"
+
+  inventario:
+    build: .
+    container_name: inventario_app
+    ports:
+      - "8082:8082"
+    depends_on:
+      - postgres
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/donaton
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: admin123
