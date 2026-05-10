@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.donaton.donaciones.model.Donacion;
+import com.donaton.donaciones.model.DonacionDetalle;
 import com.donaton.donaciones.service.DonacionService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,8 +28,8 @@ public class DonacionController {
 
     @Operation(summary = "Crear una nueva donación")
     @PostMapping
-    public Donacion crear(@RequestBody Donacion d) {
-        return service.crear(d);
+    public Donacion crear(@RequestBody DonacionDetalle d) {
+        return service.crearDonacion(d.getNombreDonante(), d.getTipoDonacion(), d.getCantidad());
     }
 
     @Operation(summary = "Obtener listado de donaciones")
