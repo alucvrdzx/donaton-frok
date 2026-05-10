@@ -4,9 +4,8 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.donaton.donaciones.factory.DonacionFactory;
 
-import com.donaton.donaciones.model.Donacion;
+import com.donaton.donaciones.factory.DonacionFactory;
 import com.donaton.donaciones.model.DonacionDetalle;
 import com.donaton.donaciones.repository.DonacionRepository;
 
@@ -19,13 +18,34 @@ public class DonacionService {
     @Autowired
     private DonacionFactory factory;
 
-    public Donacion crearDonacion(String nombreDonante, String tipoDonacion, Double cantidad, String detalle) {
+    public DonacionDetalle crearDonacion(String nombreDonante, String tipoDonacion, Double cantidad, String detalle) {
         DonacionDetalle donacion = factory.crearDonacion(nombreDonante, tipoDonacion, cantidad, detalle);
         return repository.save(donacion);
     }
 
-    public List<Donacion> listar() {
+    public List<DonacionDetalle> listar() {
         return repository.findAll();
     }
 
+    public List<DonacionDetalle> buscarPorDetalle(String detalle) {
+        return repository.findByDetalleContaining(detalle);
+    }
+
+    public List<DonacionDetalle> buscarPorTipoDonacion(String tipoDonacion) {
+        return repository.findByTipoDonacion(tipoDonacion);
+    }
+
+    public DonacionDetalle obtenerPorId(Long id) {
+        return repository.findById(id).orElse(null);
+    }
+
+    public void eliminar(Long id) {
+        repository.deleteById(id);
+    }
+
+    public DonacionDetalle actualizar(Long id, DonacionDetalle d) {
+        DonacionDetalle actualizada = factory.crearDonacion(d.getNombreDonante(), d.getTipoDonacion(), d.getCantidad(), d.getDetalle());
+        actualizada.setId(id);
+        return repository.save(actualizada);
+    }
 }

@@ -2,8 +2,15 @@ package com.donaton.donaciones.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.donaton.donaciones.model.Donacion;
+import java.util.List;
 
-public interface DonacionRepository extends JpaRepository<Donacion, Long> {
+import com.donaton.donaciones.model.DonacionDetalle;
+
+public interface DonacionRepository extends JpaRepository<DonacionDetalle, Long> {
+
+    // JPA genera el SQL automáticamente con estos nombres
+    List<DonacionDetalle> findByDetalleContaining(String detalle);
+
+    List<DonacionDetalle> findByTipoDonacion(String tipoDonacion);
 
 }
