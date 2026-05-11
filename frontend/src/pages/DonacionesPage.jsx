@@ -110,13 +110,13 @@ const DonacionesPage = () => {
             required 
             value={nombreDonante}
             onChange={(e) => setNombreDonante(e.target.value)}
-            style={{ padding: '0.8rem', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', color: 'var(--text-primary)' }}
+            
           />
 
           <select 
             value={tipoDonacion}
             onChange={(e) => setTipoDonacion(e.target.value)}
-            style={{ padding: '0.8rem', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', color: 'var(--text-primary)' }}
+            
           >
             <option value="ROPA">ROPA</option>
             <option value="ALIMENTO">ALIMENTO</option>
@@ -131,7 +131,7 @@ const DonacionesPage = () => {
             required 
             value={cantidad}
             onChange={(e) => setCantidad(e.target.value)}
-            style={{ padding: '0.8rem', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', color: 'var(--text-primary)' }}
+            
           />
 
           <input 
@@ -140,7 +140,7 @@ const DonacionesPage = () => {
             required 
             value={detalle}
             onChange={(e) => setDetalle(e.target.value)}
-            style={{ padding: '0.8rem', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', color: 'var(--text-primary)' }}
+            
           />
 
           <div style={{ display: 'flex', gap: '1rem' }}>

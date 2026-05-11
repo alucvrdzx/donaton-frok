@@ -130,13 +130,13 @@ const LogisticaPage = () => {
               required
               value={destino}
               onChange={(e) => setDestino(e.target.value)}
-              style={{ padding: '0.8rem', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', color: 'var(--text-primary)' }}
+              
             />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <select
                 value={producto}
                 onChange={(e) => setProducto(e.target.value)}
-                style={{ padding: '0.8rem', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', color: 'var(--text-primary)' }}
+                
               >
                 <option value="ROPA">ROPA</option>
                 <option value="ALIMENTO">ALIMENTO</option>
@@ -149,7 +149,7 @@ const LogisticaPage = () => {
                 required
                 value={detalle}
                 onChange={(e) => setDetalle(e.target.value)}
-                style={{ padding: '0.8rem', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', color: 'var(--text-primary)' }}
+                
               />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -160,12 +160,12 @@ const LogisticaPage = () => {
                 required
                 value={cantidad}
                 onChange={(e) => setCantidad(e.target.value)}
-                style={{ padding: '0.8rem', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', color: 'var(--text-primary)' }}
+                
               />
               <select
                 value={estado}
                 onChange={(e) => setEstado(e.target.value)}
-                style={{ padding: '0.8rem', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', color: 'var(--text-primary)' }}
+                
               >
                 <option value="PENDIENTE">PENDIENTE</option>
                 <option value="EN_TRANSITO">EN TRÁNSITO</option>
@@ -184,7 +184,7 @@ const LogisticaPage = () => {
             <span>Inventario Disponible</span>
             <button
               onClick={fetchInventario}
-              style={{ background: 'none', border: 'none', color: 'var(--primary-color', cursor: 'pointer', fontSize: '0.9rem', textDecoration: 'underline' }}
+              style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', fontSize: '0.9rem', textDecoration: 'underline' }}
             >
               Refrescar
             </button>
@@ -201,18 +201,24 @@ const LogisticaPage = () => {
                       key={item.id}
                       onClick={() => autocompletarDesdeInventario(item)}
                       style={{
-                        background: '#f8fafc',
+                        background: 'rgba(15, 23, 42, 0.4)',
                         border: '1px solid var(--surface-border)',
-                        borderRadius: '8px',
+                        borderRadius: '12px',
                         padding: '1rem',
                         cursor: 'pointer',
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
-                        transition: 'background 0.2s ease'
+                        transition: 'all 0.2s ease'
                       }}
-                      onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                      onMouseOut={(e) => e.currentTarget.style.background = 'rgba(0,0,0,0.2)'}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                        e.currentTarget.style.transform = 'translateX(5px)';
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.background = 'rgba(15, 23, 42, 0.4)';
+                        e.currentTarget.style.transform = 'translateX(0)';
+                      }}
                     >
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>

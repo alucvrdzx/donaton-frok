@@ -348,3 +348,35 @@ body {
 .badge-alimento { background: rgba(16, 185, 129, 0.2); color: #34d399; }
 .badge-monetaria { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
 .badge-default { background: rgba(156, 163, 175, 0.2); color: #9ca3af; }
+
+/* ===== FORM STYLES ===== */
+.stat-card input,
+.stat-card select {
+  padding: 0.8rem;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #f8fafc !important;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card input::placeholder {
+  color: #94a3b8;
+}
+
+.stat-card input:focus,
+.stat-card select:focus {
+  outline: none;
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.stat-card select option {
+  background: #1e293b;
+  color: #f8fafc;
+  padding: 0.5rem;
+}
