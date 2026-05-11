@@ -21,4 +21,10 @@ public class Logistica {
     private String destino;
 
     private String estado;
+
+    private String producto;
+
+    private Double cantidad;
+
+    private String detalle;
 }

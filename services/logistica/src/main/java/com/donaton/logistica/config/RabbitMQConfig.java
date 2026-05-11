@@ -1,4 +1,4 @@
-package com.donaton.inventario.config;
+package com.donaton.logistica.config;
 
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
@@ -12,14 +12,8 @@ import org.springframework.context.annotation.Configuration;
 public class RabbitMQConfig {
 
     public static final String EXCHANGE = "donaton.exchange";
-
-    // Cola para eventos de donaciones
-    public static final String DONACION_QUEUE = "inventario.donacion.queue";
-    public static final String DONACION_ROUTING_KEY = "donacion.creada";
-
-    // Cola para eventos de logistica
-    public static final String LOGISTICA_QUEUE = "inventario.logistica.queue";
-    public static final String LOGISTICA_ROUTING_KEY = "envio.entregado";
+    public static final String QUEUE = "inventario.logistica.queue";
+    public static final String ROUTING_KEY = "envio.entregado";
 
     @Bean
     public TopicExchange exchange() {
@@ -27,23 +21,13 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Queue donacionQueue() {
-        return new Queue(DONACION_QUEUE, true);
-    }
-
-    @Bean
     public Queue logisticaQueue() {
-        return new Queue(LOGISTICA_QUEUE, true);
-    }
-
-    @Bean
-    public Binding donacionBinding(Queue donacionQueue, TopicExchange exchange) {
-        return BindingBuilder.bind(donacionQueue).to(exchange).with(DONACION_ROUTING_KEY);
+        return new Queue(QUEUE, true);
     }
 
     @Bean
     public Binding logisticaBinding(Queue logisticaQueue, TopicExchange exchange) {
-        return BindingBuilder.bind(logisticaQueue).to(exchange).with(LOGISTICA_ROUTING_KEY);
+        return BindingBuilder.bind(logisticaQueue).to(exchange).with(ROUTING_KEY);
     }
 
     @Bean
