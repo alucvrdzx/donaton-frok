@@ -123,6 +123,24 @@ app.post('/api/logistica', async (req, res) => {
     }
 });
 
+app.get('/api/logistica/:id', async (req, res) => {
+    try {
+        const response = await axios.get(`${GATEWAY_URL}/logistica/${req.params.id}`);
+        res.json(response.data);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al obtener el envío' });
+    }
+});
+
+app.put('/api/logistica/:id/estado', async (req, res) => {
+    try {
+        const response = await axios.put(`${GATEWAY_URL}/logistica/${req.params.id}/estado`, req.body);
+        res.json(response.data);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al actualizar estado del envío' });
+    }
+});
+
 // ==========================================
 // INICIAR SERVIDOR
 // ==========================================

@@ -6,6 +6,8 @@ const InventarioPage = () => {
 
   const [producto, setProducto] = useState('');
   const [stock, setStock] = useState('');
+  const [detalle, setDetalle] = useState('');
+  const [unidadMedida, setUnidadMedida] = useState('unidades');
 
   const fetchInventario = async () => {
     setLoading(true);
@@ -28,7 +30,9 @@ const InventarioPage = () => {
     
     const nuevoProducto = {
       producto,
-      stock: parseInt(stock)
+      stock: parseFloat(stock),
+      detalle,
+      unidadMedida
     };
 
     try {
@@ -40,6 +44,8 @@ const InventarioPage = () => {
       
       setProducto('');
       setStock('');
+      setDetalle('');
+      setUnidadMedida('unidades');
       fetchInventario();
       alert("¡Producto agregado al inventario!");
     } catch (error) {
@@ -51,27 +57,51 @@ const InventarioPage = () => {
     <div className="page-container">
       <header className="header" style={{ marginBottom: '2rem' }}>
         <h1>Gestión de Inventario</h1>
+        <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
+          El inventario se actualiza automáticamente con cada donación recibida vía RabbitMQ
+        </p>
       </header>
 
       <div className="stat-card" style={{ marginBottom: '3rem', textAlign: 'left' }}>
-        <h3>Agregar Producto</h3>
+        <h3>Agregar Producto Manualmente</h3>
         <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
           <input 
             type="text" 
-            placeholder="Nombre del Producto" 
+            placeholder="Tipo de Producto (ej: ROPA, ALIMENTO)" 
             required 
             value={producto}
             onChange={(e) => setProducto(e.target.value)}
             style={{ padding: '0.8rem', borderRadius: '8px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
           />
           <input 
-            type="number" 
-            placeholder="Cantidad en Stock" 
+            type="text" 
+            placeholder="Detalle (ej: Camisetas, Arroz)" 
             required 
-            value={stock}
-            onChange={(e) => setStock(e.target.value)}
+            value={detalle}
+            onChange={(e) => setDetalle(e.target.value)}
             style={{ padding: '0.8rem', borderRadius: '8px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
           />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <input 
+              type="number" 
+              step="0.01"
+              placeholder="Stock" 
+              required 
+              value={stock}
+              onChange={(e) => setStock(e.target.value)}
+              style={{ padding: '0.8rem', borderRadius: '8px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+            />
+            <select 
+              value={unidadMedida}
+              onChange={(e) => setUnidadMedida(e.target.value)}
+              style={{ padding: '0.8rem', borderRadius: '8px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+            >
+              <option value="unidades">Unidades</option>
+              <option value="kilos">Kilos</option>
+              <option value="litros">Litros</option>
+              <option value="pesos">Pesos</option>
+            </select>
+          </div>
           <button type="submit" style={{ padding: '1rem', borderRadius: '8px', background: '#10b981', color: 'white', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
             Guardar Producto
           </button>
@@ -85,8 +115,10 @@ const InventarioPage = () => {
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Producto</th>
-                <th>Stock Disponible</th>
+                <th>Tipo</th>
+                <th>Detalle</th>
+                <th>Stock</th>
+                <th>Unidad</th>
                 <th>Estado</th>
               </tr>
             </thead>
@@ -94,10 +126,17 @@ const InventarioPage = () => {
               {inventario.map((i) => (
                 <tr key={i.id}>
                   <td>{i.id}</td>
-                  <td style={{ fontWeight: '500' }}>{i.producto}</td>
+                  <td>
+                    <span className={`badge badge-${(i.producto || '').toLowerCase()}`}>
+                      {i.producto}
+                    </span>
+                  </td>
+                  <td style={{ fontWeight: '500' }}>{i.detalle || '—'}</td>
                   <td>
                     <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>{i.stock}</span>
+                    {i.unidadMedida && <span style={{ color: 'var(--text-secondary)', marginLeft: '0.3rem' }}>{i.unidadMedida}</span>}
                   </td>
+                  <td>{i.unidadMedida || '—'}</td>
                   <td>
                     {i.stock === 0 ? (
                       <span className="badge badge-danger" style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444' }}>Agotado</span>
@@ -111,7 +150,7 @@ const InventarioPage = () => {
               ))}
               {inventario.length === 0 && (
                 <tr>
-                  <td colSpan="4" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
+                  <td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
                     No hay productos en el inventario.
                   </td>
                 </tr>
