@@ -1,10 +1,13 @@
 package com.donaton.logistica.controller;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,5 +37,17 @@ public class LogisticaController {
     @GetMapping
     public List<Logistica> listar() {
         return service.listar();
+    }
+
+    @Operation(summary = "Obtener envío por ID")
+    @GetMapping("/{id}")
+    public Logistica obtenerPorId(@PathVariable Long id) {
+        return service.obtenerPorId(id);
+    }
+
+    @Operation(summary = "Actualizar estado de un envío (PENDIENTE, EN_TRANSITO, ENTREGADO)")
+    @PutMapping("/{id}/estado")
+    public Logistica actualizarEstado(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        return service.actualizarEstado(id, body.get("estado"));
     }
 }

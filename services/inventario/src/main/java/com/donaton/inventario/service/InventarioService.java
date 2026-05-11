@@ -21,4 +21,20 @@ public class InventarioService {
     public List<Inventario> listar() {
         return repository.findAll();
     }
+
+    // Cuando llega una donacion via RabbitMQ, suma al stock
+    public void agregarStock(String producto, String detalle, Double cantidad, String unidadMedida) {
+        Inventario inv = repository.findByProductoAndDetalle(producto, detalle)
+                .orElse(new Inventario(null, producto, 0.0, detalle, unidadMedida));
+        inv.setStock(inv.getStock() + cantidad);
+        repository.save(inv);
+    }
+
+    // Cuando logistica marca entregado, descuenta del stock
+    public void descontarStock(String producto, String detalle, Double cantidad) {
+        repository.findByProductoAndDetalle(producto, detalle).ifPresent(inv -> {
+            inv.setStock(Math.max(0, inv.getStock() - cantidad));
+            repository.save(inv);
+        });
+    }
 }

@@ -18,5 +18,7 @@ public class Inventario {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String producto;
-    private Integer stock;
+    private Double stock;
+    private String detalle;
+    private String unidadMedida;
 }

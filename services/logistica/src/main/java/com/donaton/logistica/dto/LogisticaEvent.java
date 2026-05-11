@@ -1,0 +1,15 @@
+package com.donaton.logistica.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class LogisticaEvent {
+
+    private String producto;
+    private Double cantidad;
+    private String detalle;
+}

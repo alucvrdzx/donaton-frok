@@ -45,8 +45,10 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres_donaciones:5432/donaciones
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: admin123
+      SPRING_RABBITMQ_HOST: rabbitmq
     depends_on:
       - postgres_donaciones
+      - rabbitmq
     networks:
       - microservicios-net
 
@@ -59,8 +61,10 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres_inventario:5432/inventario
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: admin123
+      SPRING_RABBITMQ_HOST: rabbitmq
     depends_on:
       - postgres_inventario
+      - rabbitmq
     networks:
       - microservicios-net
 
@@ -73,8 +77,10 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres_logistica:5432/logistica
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: admin123
+      SPRING_RABBITMQ_HOST: rabbitmq
     depends_on:
       - postgres_logistica
+      - rabbitmq
     networks:
       - microservicios-net
 
@@ -93,6 +99,18 @@ services:
       - donaciones
       - inventario
       - logistica
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"    # AMQP
+      - "15672:15672"  # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - microservicios-net
 
 networks:
   microservicios-net:
