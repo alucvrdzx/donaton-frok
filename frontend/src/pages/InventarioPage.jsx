@@ -71,7 +71,7 @@ const InventarioPage = () => {
             required 
             value={producto}
             onChange={(e) => setProducto(e.target.value)}
-            style={{ padding: '0.8rem', borderRadius: '8px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+            style={{ padding: '0.8rem', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', color: 'var(--text-primary)' }}
           />
           <input 
             type="text" 
@@ -79,7 +79,7 @@ const InventarioPage = () => {
             required 
             value={detalle}
             onChange={(e) => setDetalle(e.target.value)}
-            style={{ padding: '0.8rem', borderRadius: '8px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+            style={{ padding: '0.8rem', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', color: 'var(--text-primary)' }}
           />
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <input 
@@ -89,12 +89,12 @@ const InventarioPage = () => {
               required 
               value={stock}
               onChange={(e) => setStock(e.target.value)}
-              style={{ padding: '0.8rem', borderRadius: '8px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+              style={{ padding: '0.8rem', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', color: 'var(--text-primary)' }}
             />
             <select 
               value={unidadMedida}
               onChange={(e) => setUnidadMedida(e.target.value)}
-              style={{ padding: '0.8rem', borderRadius: '8px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+              style={{ padding: '0.8rem', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', color: 'var(--text-primary)' }}
             >
               <option value="unidades">Unidades</option>
               <option value="kilos">Kilos</option>

@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 
 const LogisticaPage = () => {
   const [logistica, setLogistica] = useState([]);
+  const [inventario, setInventario] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingInv, setLoadingInv] = useState(true);
 
   const [destino, setDestino] = useState('');
   const [estado, setEstado] = useState('PENDIENTE');
@@ -22,13 +24,38 @@ const LogisticaPage = () => {
     setLoading(false);
   };
 
+  const fetchInventario = async () => {
+    setLoadingInv(true);
+    try {
+      const response = await fetch('http://localhost:3001/api/inventario');
+      const data = await response.json();
+      // Filtrar los que tienen stock > 0
+      setInventario(data.filter(item => item.stock > 0));
+    } catch (error) {
+      console.error("Error al cargar inventario:", error);
+    }
+    setLoadingInv(false);
+  };
+
   useEffect(() => {
     fetchLogistica();
+    fetchInventario();
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
+    // Validar cantidad contra inventario disponible
+    const itemInventario = inventario.find(i => i.producto === producto && i.detalle === detalle);
+    if (!itemInventario) {
+      if (!window.confirm(`Advertencia: No se encontró '${detalle}' de tipo '${producto}' en el inventario actual. ¿Deseas enviarlo de todos modos?`)) {
+        return;
+      }
+    } else if (parseFloat(cantidad) > itemInventario.stock) {
+      alert(`Error: La cantidad solicitada (${cantidad}) excede el stock disponible (${itemInventario.stock}).`);
+      return;
+    }
+
     const nuevoEnvio = {
       destino,
       estado,
@@ -43,7 +70,7 @@ const LogisticaPage = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(nuevoEnvio)
       });
-      
+
       setDestino('');
       setEstado('PENDIENTE');
       setProducto('ROPA');
@@ -65,6 +92,7 @@ const LogisticaPage = () => {
           body: JSON.stringify({ estado: 'ENTREGADO' })
         });
         fetchLogistica();
+        fetchInventario(); // Refrescar inventario tras descontar
         alert("¡Envío marcado como entregado! El inventario se actualizó automáticamente.");
       } catch (error) {
         alert("Error al actualizar el estado.");
@@ -72,71 +100,148 @@ const LogisticaPage = () => {
     }
   };
 
+  const autocompletarDesdeInventario = (item) => {
+    setProducto(item.producto || 'ROPA');
+    setDetalle(item.detalle || '');
+    // Opcional: prellenar con todo el stock, o dejar vacio para que el usuario elija
+    // setCantidad(item.stock.toString()); 
+  };
+
   return (
     <div className="page-container">
       <header className="header" style={{ marginBottom: '2rem' }}>
         <h1>Gestión Logística</h1>
         <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
-          Al marcar un envío como ENTREGADO, el inventario se descuenta automáticamente vía RabbitMQ
+          Planifica envíos seleccionando recursos directamente del inventario disponible.
         </p>
       </header>
 
-      <div className="stat-card" style={{ marginBottom: '3rem', textAlign: 'left' }}>
-        <h3>Crear Envío</h3>
-        <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
-          <input 
-            type="text" 
-            placeholder="Destino (ej: Refugio Norte)" 
-            required 
-            value={destino}
-            onChange={(e) => setDestino(e.target.value)}
-            style={{ padding: '0.8rem', borderRadius: '8px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
-          />
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <select 
-              value={producto}
-              onChange={(e) => setProducto(e.target.value)}
-              style={{ padding: '0.8rem', borderRadius: '8px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
-            >
-              <option value="ROPA">ROPA</option>
-              <option value="ALIMENTO">ALIMENTO</option>
-              <option value="BEBESTIBLE">BEBESTIBLE</option>
-              <option value="MONETARIA">MONETARIA</option>
-            </select>
-            <input 
-              type="number" 
-              step="0.01"
-              placeholder="Cantidad" 
-              required 
-              value={cantidad}
-              onChange={(e) => setCantidad(e.target.value)}
-              style={{ padding: '0.8rem', borderRadius: '8px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+      {/* Grid superior: Formulario + Inventario Dispobible */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '3rem' }}>
+
+        {/* Formulario */}
+        <div className="stat-card" style={{ textAlign: 'left', margin: 0, height: '100%' }}>
+          <h3 style={{ marginTop: 0 }}>Crear Envío</h3>
+          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Selecciona un item del inventario o escribe los detalles manualmente.</p>
+          <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
+            <input
+              type="text"
+              placeholder="Destino (ej: Refugio Norte)"
+              required
+              value={destino}
+              onChange={(e) => setDestino(e.target.value)}
+              style={{ padding: '0.8rem', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', color: 'var(--text-primary)' }}
             />
-          </div>
-          <input 
-            type="text" 
-            placeholder="Detalle del producto (ej: Camisetas, Arroz)" 
-            required 
-            value={detalle}
-            onChange={(e) => setDetalle(e.target.value)}
-            style={{ padding: '0.8rem', borderRadius: '8px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
-          />
-          <select 
-            value={estado}
-            onChange={(e) => setEstado(e.target.value)}
-            style={{ padding: '0.8rem', borderRadius: '8px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
-          >
-            <option value="PENDIENTE">PENDIENTE</option>
-            <option value="EN_TRANSITO">EN TRÁNSITO</option>
-          </select>
-          <button type="submit" style={{ padding: '1rem', borderRadius: '8px', background: '#f59e0b', color: 'white', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
-            Despachar Envío
-          </button>
-        </form>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <select
+                value={producto}
+                onChange={(e) => setProducto(e.target.value)}
+                style={{ padding: '0.8rem', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', color: 'var(--text-primary)' }}
+              >
+                <option value="ROPA">ROPA</option>
+                <option value="ALIMENTO">ALIMENTO</option>
+                <option value="BEBESTIBLE">BEBESTIBLE</option>
+                <option value="MONETARIA">MONETARIA</option>
+              </select>
+              <input
+                type="text"
+                placeholder="Detalle (ej: Arroz)"
+                required
+                value={detalle}
+                onChange={(e) => setDetalle(e.target.value)}
+                style={{ padding: '0.8rem', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', color: 'var(--text-primary)' }}
+              />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <input
+                type="number"
+                step="0.01"
+                placeholder="Cantidad a enviar"
+                required
+                value={cantidad}
+                onChange={(e) => setCantidad(e.target.value)}
+                style={{ padding: '0.8rem', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', color: 'var(--text-primary)' }}
+              />
+              <select
+                value={estado}
+                onChange={(e) => setEstado(e.target.value)}
+                style={{ padding: '0.8rem', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', color: 'var(--text-primary)' }}
+              >
+                <option value="PENDIENTE">PENDIENTE</option>
+                <option value="EN_TRANSITO">EN TRÁNSITO</option>
+              </select>
+            </div>
+
+            <button type="submit" style={{ padding: '1rem', borderRadius: '8px', background: '#f59e0b', color: 'white', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '0.5rem' }}>
+              Despachar Envío
+            </button>
+          </form>
+        </div>
+
+        {/* Panel de Inventario Rápido */}
+        <div className="stat-card" style={{ textAlign: 'left', margin: 0, height: '100%', display: 'flex', flexDirection: 'column' }}>
+          <h3 style={{ marginTop: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>Inventario Disponible</span>
+            <button
+              onClick={fetchInventario}
+              style={{ background: 'none', border: 'none', color: 'var(--primary-color', cursor: 'pointer', fontSize: '0.9rem', textDecoration: 'underline' }}
+            >
+              Refrescar
+            </button>
+          </h3>
+
+          {loadingInv ? <p>Cargando inventario...</p> : (
+            <div style={{ flex: 1, overflowY: 'auto', maxHeight: '350px', paddingRight: '0.5rem' }}>
+              {inventario.length === 0 ? (
+                <p style={{ color: 'var(--text-secondary)', textAlign: 'center', marginTop: '2rem' }}>No hay stock disponible.</p>
+              ) : (
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                  {inventario.map((item) => (
+                    <li
+                      key={item.id}
+                      onClick={() => autocompletarDesdeInventario(item)}
+                      style={{
+                        background: '#f8fafc',
+                        border: '1px solid var(--surface-border)',
+                        borderRadius: '8px',
+                        padding: '1rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        transition: 'background 0.2s ease'
+                      }}
+                      onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                      onMouseOut={(e) => e.currentTarget.style.background = 'rgba(0,0,0,0.2)'}
+                    >
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                          <span className={`badge badge-${(item.producto || '').toLowerCase()}`} style={{ fontSize: '0.7rem' }}>
+                            {item.producto}
+                          </span>
+                          <strong style={{ color: 'var(--text-primary)' }}>{item.detalle || 'Sin detalle'}</strong>
+                        </div>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                          Click para seleccionar
+                        </span>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#10b981' }}>{item.stock}</div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{item.unidadMedida || 'uds'}</div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
+
       </div>
 
+      {/* Lista de Envíos */}
       <h3>Envíos Actuales</h3>
-      {loading ? <p>Cargando...</p> : (
+      {loading ? <p>Cargando envíos...</p> : (
         <div className="data-table-container">
           <table className="data-table">
             <thead>
@@ -163,16 +268,15 @@ const LogisticaPage = () => {
                   <td>{l.cantidad || '—'}</td>
                   <td>{l.detalle || '—'}</td>
                   <td>
-                    <span className={`badge ${
-                      l.estado === 'ENTREGADO' ? 'badge-alimento' :
-                      l.estado === 'EN_TRANSITO' ? 'badge-ropa' : 'badge-monetaria'
-                    }`}>
+                    <span className={`badge ${l.estado === 'ENTREGADO' ? 'badge-alimento' :
+                        l.estado === 'EN_TRANSITO' ? 'badge-ropa' : 'badge-monetaria'
+                      }`}>
                       {l.estado}
                     </span>
                   </td>
                   <td>
                     {l.estado !== 'ENTREGADO' ? (
-                      <button 
+                      <button
                         onClick={() => marcarEntregado(l.id)}
                         className="action-btn"
                         style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', cursor: 'pointer' }}
