@@ -1,8 +1,11 @@
 package com.donaton.donaciones.model;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import java.time.LocalDateTime;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,5 +21,5 @@ public class Donacion {
 
     private Long id;
     private String nombreDonante;
-    private Double monto;
+    private LocalDateTime fechaDonacion;
 }
