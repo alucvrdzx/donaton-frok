@@ -2,9 +2,12 @@ package com.donaton.donaciones.service;
 
 import java.util.List;
 
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.donaton.donaciones.config.RabbitMQConfig;
+import com.donaton.donaciones.dto.DonacionEvent;
 import com.donaton.donaciones.factory.DonacionFactory;
 import com.donaton.donaciones.model.DonacionDetalle;
 import com.donaton.donaciones.repository.DonacionRepository;
@@ -18,9 +21,18 @@ public class DonacionService {
     @Autowired
     private DonacionFactory factory;
 
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
     public DonacionDetalle crearDonacion(String nombreDonante, String tipoDonacion, Double cantidad, String detalle) {
         DonacionDetalle donacion = factory.crearDonacion(nombreDonante, tipoDonacion, cantidad, detalle);
-        return repository.save(donacion);
+        DonacionDetalle guardada = repository.save(donacion);
+
+        // Publicar evento a RabbitMQ para que inventario se actualice
+        DonacionEvent evento = new DonacionEvent(guardada.getTipoDonacion(), guardada.getCantidad());
+        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY, evento);
+
+        return guardada;
     }
 
     public List<DonacionDetalle> listar() {
