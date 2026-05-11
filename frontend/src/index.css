@@ -265,3 +265,86 @@ body {
 .donation-card:nth-child(3) { animation-delay: 0.3s; }
 .donation-card:nth-child(4) { animation-delay: 0.4s; }
 .donation-card:nth-child(5) { animation-delay: 0.5s; }
+/* Table Styles (Excel-like) */
+.data-table-container {
+  width: 100%;
+  overflow-x: auto;
+  background: rgba(30, 41, 59, 0.5);
+  border-radius: 12px;
+  border: 1px solid var(--surface-border);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-family: 'Inter', sans-serif;
+}
+
+.data-table th,
+.data-table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.data-table th {
+  background-color: rgba(0, 0, 0, 0.2);
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.data-table tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.data-table td {
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.action-btn {
+  padding: 0.4rem 0.8rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.85rem;
+}
+
+.btn-danger {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.btn-danger:hover {
+  background-color: #ef4444;
+  color: white;
+}
+
+.badge {
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.badge-ropa { background: rgba(99, 102, 241, 0.2); color: #818cf8; }
+.badge-alimento { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+.badge-monetaria { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+.badge-default { background: rgba(156, 163, 175, 0.2); color: #9ca3af; }
