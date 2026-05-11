@@ -29,7 +29,11 @@ public class DonacionService {
         DonacionDetalle guardada = repository.save(donacion);
 
         // Publicar evento a RabbitMQ para que inventario se actualice
-        DonacionEvent evento = new DonacionEvent(guardada.getTipoDonacion(), guardada.getCantidad());
+        DonacionEvent evento = new DonacionEvent(
+                guardada.getTipoDonacion(),
+                guardada.getCantidad(),
+                guardada.getDetalle(),
+                guardada.getUnidadMedida());
         rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY, evento);
 
         return guardada;

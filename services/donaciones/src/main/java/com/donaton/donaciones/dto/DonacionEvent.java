@@ -11,4 +11,6 @@ public class DonacionEvent {
 
     private String tipoDonacion;
     private Double cantidad;
+    private String detalle;
+    private String unidadMedida;
 }

@@ -8,6 +8,6 @@ import java.util.Optional;
 
 public interface InventarioRepository extends JpaRepository<Inventario, Long> {
 
-    Optional<Inventario> findByProducto(String producto);
+    Optional<Inventario> findByProductoAndDetalle(String producto, String detalle);
 
 }

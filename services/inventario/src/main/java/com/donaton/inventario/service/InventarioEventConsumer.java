@@ -14,7 +14,13 @@ public class InventarioEventConsumer {
 
     @RabbitListener(queues = "inventario.donacion.queue")
     public void procesarDonacion(DonacionEvent evento) {
-        System.out.println(">> Evento recibido: " + evento.getTipoDonacion() + " x " + evento.getCantidad());
-        inventarioService.agregarStock(evento.getTipoDonacion(), evento.getCantidad());
+        System.out.println(">> Evento recibido: " + evento.getTipoDonacion()
+                + " | " + evento.getDetalle()
+                + " x " + evento.getCantidad() + " " + evento.getUnidadMedida());
+        inventarioService.agregarStock(
+                evento.getTipoDonacion(),
+                evento.getDetalle(),
+                evento.getCantidad(),
+                evento.getUnidadMedida());
     }
 }

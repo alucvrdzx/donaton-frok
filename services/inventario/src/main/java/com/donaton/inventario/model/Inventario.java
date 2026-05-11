@@ -19,4 +19,6 @@ public class Inventario {
     private Long id;
     private String producto;
     private Double stock;
+    private String detalle;
+    private String unidadMedida;
 }
