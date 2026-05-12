@@ -107,15 +107,15 @@ const HomePage = () => {
         <section className="stats-grid" style={{ margin: 0, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
           <div className="stat-card" style={{ borderTop: '5px solid #8b5cf6', margin: 0, padding: '2rem', textAlign: 'left' }}>
             <div className="stat-label" style={{ marginBottom: '0.8rem', color: 'var(--text-primary)', fontWeight: 'bold', fontSize: '1rem' }}>Total Donaciones</div>
-            <div className="stat-value" style={{ margin: 0, fontSize: '3.5rem' }}>{stats.donaciones.length > 0 ? stats.donaciones.length : '1500'}</div>
+            <div className="stat-value" style={{ margin: 0, fontSize: '3.5rem' }}>{stats.donaciones.length}</div>
           </div>
           <div className="stat-card" style={{ borderTop: '5px solid #10b981', margin: 0, padding: '2rem', textAlign: 'left' }}>
             <div className="stat-label" style={{ marginBottom: '0.8rem', color: 'var(--text-primary)', fontWeight: 'bold', fontSize: '1rem' }}>Productos en Inventario</div>
-            <div className="stat-value" style={{ margin: 0, fontSize: '3.5rem' }}>{stats.inventario.length > 0 ? stats.inventario.length : '8500'}</div>
+            <div className="stat-value" style={{ margin: 0, fontSize: '3.5rem' }}>{stats.inventario.length}</div>
           </div>
           <div className="stat-card" style={{ borderTop: '5px solid #f59e0b', margin: 0, padding: '2rem', textAlign: 'left' }}>
             <div className="stat-label" style={{ marginBottom: '0.8rem', color: 'var(--text-primary)', fontWeight: 'bold', fontSize: '1rem' }}>Envíos Logísticos</div>
-            <div className="stat-value" style={{ margin: 0, fontSize: '3.5rem' }}>{stats.logistica.length > 0 ? stats.logistica.length : '320'}</div>
+            <div className="stat-value" style={{ margin: 0, fontSize: '3.5rem' }}>{stats.logistica.length}</div>
           </div>
         </section>
 
