@@ -14,6 +14,7 @@ public class RabbitMQConfig {
     public static final String EXCHANGE = "donaton.exchange";
     public static final String QUEUE = "inventario.donacion.queue";
     public static final String ROUTING_KEY = "donacion.creada";
+    public static final String ROUTING_KEY_REVERTIDA = "donacion.revertida";
 
     @Bean
     public TopicExchange exchange() {

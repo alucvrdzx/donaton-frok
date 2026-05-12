@@ -56,13 +56,48 @@ public class DonacionService {
     }
 
     public void eliminar(Long id) {
+        // Revertir el efecto en inventario antes de borrar
+        DonacionDetalle anterior = repository.findById(id).orElse(null);
         repository.deleteById(id);
+
+        if (anterior != null) {
+            DonacionEvent revertir = new DonacionEvent(
+                    anterior.getTipoDonacion(),
+                    anterior.getCantidad(),
+                    anterior.getDetalle(),
+                    anterior.getUnidadMedida());
+            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY_REVERTIDA, revertir);
+        }
     }
 
     public DonacionDetalle actualizar(Long id, DonacionDetalle d) {
+        // 1. Obtener la donación anterior para revertir su efecto en inventario
+        DonacionDetalle anterior = repository.findById(id).orElse(null);
+
+        // 2. Crear y guardar la donación actualizada
         DonacionDetalle actualizada = factory.crearDonacion(d.getNombreDonante(), d.getTipoDonacion(), d.getCantidad(),
                 d.getDetalle());
         actualizada.setId(id);
-        return repository.save(actualizada);
+        DonacionDetalle guardada = repository.save(actualizada);
+
+        // 3. Revertir el efecto anterior en inventario (restar los valores viejos)
+        if (anterior != null) {
+            DonacionEvent revertir = new DonacionEvent(
+                    anterior.getTipoDonacion(),
+                    anterior.getCantidad(),
+                    anterior.getDetalle(),
+                    anterior.getUnidadMedida());
+            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY_REVERTIDA, revertir);
+        }
+
+        // 4. Aplicar el nuevo efecto en inventario (sumar los valores nuevos)
+        DonacionEvent nuevo = new DonacionEvent(
+                guardada.getTipoDonacion(),
+                guardada.getCantidad(),
+                guardada.getDetalle(),
+                guardada.getUnidadMedida());
+        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY, nuevo);
+
+        return guardada;
     }
 }

@@ -37,4 +37,16 @@ public class InventarioEventConsumer {
                 evento.getDetalle(),
                 evento.getCantidad());
     }
+
+    // Escucha reversiones de donaciones → descuenta del stock cuando se edita/elimina
+    @RabbitListener(queues = "inventario.donacion.revert.queue")
+    public void procesarReversion(DonacionEvent evento) {
+        System.out.println(">> Reversion recibida: " + evento.getTipoDonacion()
+                + " | " + evento.getDetalle()
+                + " x " + evento.getCantidad() + " " + evento.getUnidadMedida());
+        inventarioService.descontarStock(
+                evento.getTipoDonacion(),
+                evento.getDetalle(),
+                evento.getCantidad());
+    }
 }
