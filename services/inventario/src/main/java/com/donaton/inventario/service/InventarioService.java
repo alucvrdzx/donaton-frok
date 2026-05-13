@@ -14,8 +14,14 @@ public class InventarioService {
     @Autowired
     private InventarioRepository repository;
 
+    // Creación manual desde el frontend — busca si ya existe para sumar en vez de duplicar
     public Inventario crear(Inventario i) {
-        return repository.save(i);
+        return repository.findByProductoAndDetalle(i.getProducto(), i.getDetalle())
+                .map(existente -> {
+                    existente.setStock(existente.getStock() + i.getStock());
+                    return repository.save(existente);
+                })
+                .orElseGet(() -> repository.save(i));
     }
 
     public List<Inventario> listar() {

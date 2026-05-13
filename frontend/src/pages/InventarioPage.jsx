@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import catalogoProductos from '../data/catalogoProductos';
 
 const InventarioPage = () => {
   const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
@@ -7,9 +8,21 @@ const InventarioPage = () => {
   const [inventario, setInventario] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const [producto, setProducto] = useState('');
+  // Categorías base del sistema
+  const categoriasBase = Object.keys(catalogoProductos);
+  // Categorías dinámicas (base + las que ya existen en inventario)
+  const categoriasExistentes = [...new Set([
+    ...categoriasBase,
+    ...inventario.map(i => (i.producto || '').toUpperCase()).filter(Boolean)
+  ])].sort();
+
+  const [producto, setProducto] = useState(categoriasBase[0]);
+  const [nuevaCategoria, setNuevaCategoria] = useState('');
+  const [modoNuevaCategoria, setModoNuevaCategoria] = useState(false);
   const [stock, setStock] = useState('');
-  const [detalle, setDetalle] = useState('');
+  const [detalle, setDetalle] = useState(catalogoProductos[categoriasBase[0]]?.[0] || '');
+  const [modoNuevoProducto, setModoNuevoProducto] = useState(false);
+  const [productoCustom, setProductoCustom] = useState('');
   const [unidadMedida, setUnidadMedida] = useState('unidades');
 
   const fetchInventario = async () => {
@@ -31,10 +44,22 @@ const InventarioPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    const productoFinal = modoNuevaCategoria ? nuevaCategoria.toUpperCase().trim() : producto;
+    const detalleFinal = modoNuevoProducto ? productoCustom.trim() : detalle;
+
+    if (!productoFinal) {
+      alert('Debes seleccionar o crear una categoría de producto.');
+      return;
+    }
+    if (!detalleFinal) {
+      alert('Debes seleccionar o crear un producto.');
+      return;
+    }
+
     const nuevoProducto = {
-      producto,
+      producto: productoFinal,
       stock: parseFloat(stock),
-      detalle,
+      detalle: detalleFinal,
       unidadMedida
     };
 
@@ -45,9 +70,13 @@ const InventarioPage = () => {
         body: JSON.stringify(nuevoProducto)
       });
       
-      setProducto('');
+      setProducto(categoriasBase[0]);
+      setNuevaCategoria('');
+      setModoNuevaCategoria(false);
       setStock('');
-      setDetalle('');
+      setDetalle(catalogoProductos[categoriasBase[0]]?.[0] || '');
+      setModoNuevoProducto(false);
+      setProductoCustom('');
       setUnidadMedida('unidades');
       fetchInventario();
       alert("¡Producto agregado al inventario!");
@@ -69,22 +98,92 @@ const InventarioPage = () => {
         <div className="stat-card" style={{ marginBottom: '3rem', textAlign: 'left' }}>
           <h3>Agregar Producto Manualmente</h3>
         <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
-          <input 
-            type="text" 
-            placeholder="Tipo de Producto (ej: ROPA, ALIMENTO)" 
-            required 
-            value={producto}
-            onChange={(e) => setProducto(e.target.value)}
-            
-          />
-          <input 
-            type="text" 
-            placeholder="Detalle (ej: Camisetas, Arroz)" 
-            required 
-            value={detalle}
-            onChange={(e) => setDetalle(e.target.value)}
-            
-          />
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            {modoNuevaCategoria ? (
+              <input
+                type="text"
+                placeholder="Nombre de la nueva categoría (ej: MEDICAMENTO)"
+                required
+                value={nuevaCategoria}
+                onChange={(e) => setNuevaCategoria(e.target.value.toUpperCase())}
+                style={{ flex: 1, textTransform: 'uppercase' }}
+              />
+            ) : (
+              <select
+                value={producto}
+                onChange={(e) => {
+                  setProducto(e.target.value);
+                  setDetalle(catalogoProductos[e.target.value]?.[0] || '');
+                  setModoNuevoProducto(false);
+                }}
+                required
+                style={{ flex: 1 }}
+              >
+                {categoriasExistentes.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            )}
+            <button
+              type="button"
+              onClick={() => setModoNuevaCategoria(!modoNuevaCategoria)}
+              style={{
+                padding: '0.7rem 1rem',
+                borderRadius: '8px',
+                background: modoNuevaCategoria ? 'rgba(239, 68, 68, 0.2)' : 'rgba(99, 102, 241, 0.2)',
+                color: modoNuevaCategoria ? '#ef4444' : '#818cf8',
+                border: `1px solid ${modoNuevaCategoria ? 'rgba(239, 68, 68, 0.3)' : 'rgba(99, 102, 241, 0.3)'}`,
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                whiteSpace: 'nowrap',
+                fontSize: '0.85rem'
+              }}
+            >
+              {modoNuevaCategoria ? '✕ Cancelar' : '+ Nueva'}
+            </button>
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            {modoNuevoProducto ? (
+              <input
+                type="text"
+                placeholder="Nombre del producto nuevo"
+                required
+                value={productoCustom}
+                onChange={(e) => setProductoCustom(
+                  e.target.value.replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase())
+                )}
+                style={{ flex: 1 }}
+              />
+            ) : (
+              <select
+                value={detalle}
+                onChange={(e) => setDetalle(e.target.value)}
+                required
+                style={{ flex: 1 }}
+              >
+                {(catalogoProductos[modoNuevaCategoria ? '' : producto] || []).map(prod => (
+                  <option key={prod} value={prod}>{prod}</option>
+                ))}
+              </select>
+            )}
+            <button
+              type="button"
+              onClick={() => setModoNuevoProducto(!modoNuevoProducto)}
+              style={{
+                padding: '0.7rem 1rem',
+                borderRadius: '8px',
+                background: modoNuevoProducto ? 'rgba(239, 68, 68, 0.2)' : 'rgba(99, 102, 241, 0.2)',
+                color: modoNuevoProducto ? '#ef4444' : '#818cf8',
+                border: `1px solid ${modoNuevoProducto ? 'rgba(239, 68, 68, 0.3)' : 'rgba(99, 102, 241, 0.3)'}`,
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                whiteSpace: 'nowrap',
+                fontSize: '0.85rem'
+              }}
+            >
+              {modoNuevoProducto ? '✕ Cancelar' : '+ Nuevo'}
+            </button>
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <input 
               type="number" 
@@ -113,55 +212,89 @@ const InventarioPage = () => {
       </div>
       )}
 
-      <h3>Listado de Inventario</h3>
-      {loading ? <p>Cargando...</p> : (
-        <div className="data-table-container">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Tipo</th>
-                <th>Detalle</th>
-                <th>Stock</th>
-                <th>Unidad</th>
-                <th>Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              {inventario.map((i) => (
-                <tr key={i.id}>
-                  <td>{i.id}</td>
-                  <td>
-                    <span className={`badge badge-${(i.producto || '').toLowerCase()}`}>
-                      {i.producto}
+      <h3>Inventario por Categoría</h3>
+      {loading ? <p>Cargando...</p> : inventario.length === 0 ? (
+        <div className="stat-card" style={{ textAlign: 'center', padding: '3rem' }}>
+          <p style={{ color: 'var(--text-secondary)' }}>No hay productos en el inventario.</p>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {Object.entries(
+            inventario.reduce((grupos, item) => {
+              const cat = item.producto || 'SIN CATEGORÍA';
+              if (!grupos[cat]) grupos[cat] = [];
+              grupos[cat].push(item);
+              return grupos;
+            }, {})
+          ).map(([categoria, items]) => {
+            const totalStock = items.reduce((sum, i) => sum + (i.stock || 0), 0);
+            const agotados = items.filter(i => i.stock === 0).length;
+
+            return (
+              <details key={categoria} className="stat-card" style={{ cursor: 'pointer', padding: 0 }} open>
+                <summary style={{
+                  padding: '1.5rem',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  listStyle: 'none',
+                  userSelect: 'none'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <span className={`badge badge-${categoria.toLowerCase()}`} style={{ fontSize: '0.9rem', padding: '0.4rem 1rem' }}>
+                      {categoria}
                     </span>
-                  </td>
-                  <td style={{ fontWeight: '500' }}>{i.detalle || '—'}</td>
-                  <td>
-                    <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>{i.stock}</span>
-                    {i.unidadMedida && <span style={{ color: 'var(--text-secondary)', marginLeft: '0.3rem' }}>{i.unidadMedida}</span>}
-                  </td>
-                  <td>{i.unidadMedida || '—'}</td>
-                  <td>
-                    {i.stock === 0 ? (
-                      <span className="badge badge-danger" style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444' }}>Agotado</span>
-                    ) : i.stock < 10 ? (
-                      <span className="badge badge-monetaria">Stock Bajo</span>
-                    ) : (
-                      <span className="badge badge-alimento">En Stock</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-              {inventario.length === 0 && (
-                <tr>
-                  <td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
-                    No hay productos en el inventario.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                      {items.length} {items.length === 1 ? 'producto' : 'productos'}
+                      {agotados > 0 && <span style={{ color: '#ef4444', marginLeft: '0.5rem' }}>({agotados} agotado{agotados > 1 ? 's' : ''})</span>}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <span style={{ fontWeight: 'bold', fontSize: '1.2rem', color: totalStock > 0 ? '#10b981' : '#ef4444' }}>
+                      {totalStock} total
+                    </span>
+                    <span style={{ fontSize: '1.2rem', transition: 'transform 0.2s ease' }}>▼</span>
+                  </div>
+                </summary>
+
+                <div style={{ padding: '0 1.5rem 1.5rem' }}>
+                  <table className="data-table" style={{ margin: 0 }}>
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Detalle</th>
+                        <th>Stock</th>
+                        <th>Unidad</th>
+                        <th>Estado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {items.map((i) => (
+                        <tr key={i.id}>
+                          <td>{i.id}</td>
+                          <td style={{ fontWeight: '500' }}>{i.detalle || '—'}</td>
+                          <td>
+                            <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>{i.stock}</span>
+                            {i.unidadMedida && <span style={{ color: 'var(--text-secondary)', marginLeft: '0.3rem' }}>{i.unidadMedida}</span>}
+                          </td>
+                          <td>{i.unidadMedida || '—'}</td>
+                          <td>
+                            {i.stock === 0 ? (
+                              <span className="badge badge-danger" style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444' }}>Agotado</span>
+                            ) : i.stock < 10 ? (
+                              <span className="badge badge-monetaria">Stock Bajo</span>
+                            ) : (
+                              <span className="badge badge-alimento">En Stock</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </details>
+            );
+          })}
         </div>
       )}
     </div>

@@ -14,6 +14,8 @@ public class RabbitMQConfig {
     public static final String EXCHANGE = "donaton.exchange";
     public static final String QUEUE = "inventario.donacion.queue";
     public static final String ROUTING_KEY = "donacion.creada";
+
+    public static final String REVERT_QUEUE = "inventario.donacion.revert.queue";
     public static final String ROUTING_KEY_REVERTIDA = "donacion.revertida";
 
     @Bean
@@ -27,8 +29,18 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public Queue revertQueue() {
+        return new Queue(REVERT_QUEUE, true);
+    }
+
+    @Bean
     public Binding binding(Queue queue, TopicExchange exchange) {
         return BindingBuilder.bind(queue).to(exchange).with(ROUTING_KEY);
+    }
+
+    @Bean
+    public Binding revertBinding(Queue revertQueue, TopicExchange exchange) {
+        return BindingBuilder.bind(revertQueue).to(exchange).with(ROUTING_KEY_REVERTIDA);
     }
 
     @Bean

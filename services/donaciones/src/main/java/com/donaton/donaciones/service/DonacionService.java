@@ -25,13 +25,30 @@ public class DonacionService {
     private RabbitTemplate rabbitTemplate;
 
     public DonacionDetalle crearDonacion(String nombreDonante, String tipoDonacion, Double cantidad, String detalle) {
-        DonacionDetalle donacion = factory.crearDonacion(nombreDonante, tipoDonacion, cantidad, detalle);
-        DonacionDetalle guardada = repository.save(donacion);
+        // Buscar si ya existe una donación del mismo donante, tipo y detalle
+        java.util.Optional<DonacionDetalle> existente = repository
+                .findByNombreDonanteAndTipoDonacionAndDetalle(nombreDonante, tipoDonacion, detalle);
 
-        // Publicar evento a RabbitMQ para que inventario se actualice
+        DonacionDetalle guardada;
+        double cantidadParaInventario;
+
+        if (existente.isPresent()) {
+            // Si ya existe, sumar la cantidad
+            DonacionDetalle donacionExistente = existente.get();
+            cantidadParaInventario = cantidad; // Solo la cantidad nueva va al inventario
+            donacionExistente.setCantidad(donacionExistente.getCantidad() + cantidad);
+            guardada = repository.save(donacionExistente);
+        } else {
+            // Si no existe, crear nueva
+            DonacionDetalle donacion = factory.crearDonacion(nombreDonante, tipoDonacion, cantidad, detalle);
+            guardada = repository.save(donacion);
+            cantidadParaInventario = cantidad;
+        }
+
+        // Publicar evento a RabbitMQ para que inventario se actualice (solo la cantidad nueva)
         DonacionEvent evento = new DonacionEvent(
                 guardada.getTipoDonacion(),
-                guardada.getCantidad(),
+                cantidadParaInventario,
                 guardada.getDetalle(),
                 guardada.getUnidadMedida());
         rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY, evento);
@@ -71,32 +88,41 @@ public class DonacionService {
     }
 
     public DonacionDetalle actualizar(Long id, DonacionDetalle d) {
-        // 1. Obtener la donación anterior para revertir su efecto en inventario
+        // 1. Obtener la donación anterior
         DonacionDetalle anterior = repository.findById(id).orElse(null);
+        if (anterior == null) return null;
 
-        // 2. Crear y guardar la donación actualizada
-        DonacionDetalle actualizada = factory.crearDonacion(d.getNombreDonante(), d.getTipoDonacion(), d.getCantidad(),
-                d.getDetalle());
-        actualizada.setId(id);
-        DonacionDetalle guardada = repository.save(actualizada);
+        // 2. Guardar la cantidad vieja ANTES de modificar
+        double cantidadAnterior = anterior.getCantidad();
 
-        // 3. Revertir el efecto anterior en inventario (restar los valores viejos)
-        if (anterior != null) {
-            DonacionEvent revertir = new DonacionEvent(
-                    anterior.getTipoDonacion(),
-                    anterior.getCantidad(),
-                    anterior.getDetalle(),
-                    anterior.getUnidadMedida());
-            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY_REVERTIDA, revertir);
+        // 3. Actualizar los campos directamente en la entidad existente
+        anterior.setNombreDonante(d.getNombreDonante());
+        anterior.setTipoDonacion(d.getTipoDonacion());
+        anterior.setCantidad(d.getCantidad());
+        anterior.setDetalle(d.getDetalle());
+        DonacionDetalle guardada = repository.save(anterior);
+
+        // 4. Calcular la diferencia neta y enviar UN SOLO mensaje
+        double diferencia = guardada.getCantidad() - cantidadAnterior;
+
+        if (diferencia > 0) {
+            // La cantidad aumentó → sumar la diferencia al inventario
+            DonacionEvent evento = new DonacionEvent(
+                    guardada.getTipoDonacion(),
+                    diferencia,
+                    guardada.getDetalle(),
+                    guardada.getUnidadMedida());
+            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY, evento);
+        } else if (diferencia < 0) {
+            // La cantidad disminuyó → descontar la diferencia del inventario
+            DonacionEvent evento = new DonacionEvent(
+                    guardada.getTipoDonacion(),
+                    Math.abs(diferencia),
+                    guardada.getDetalle(),
+                    guardada.getUnidadMedida());
+            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY_REVERTIDA, evento);
         }
-
-        // 4. Aplicar el nuevo efecto en inventario (sumar los valores nuevos)
-        DonacionEvent nuevo = new DonacionEvent(
-                guardada.getTipoDonacion(),
-                guardada.getCantidad(),
-                guardada.getDetalle(),
-                guardada.getUnidadMedida());
-        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY, nuevo);
+        // Si diferencia == 0, no hacer nada en inventario
 
         return guardada;
     }

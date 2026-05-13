@@ -13,4 +13,8 @@ public interface DonacionRepository extends JpaRepository<DonacionDetalle, Long>
 
     List<DonacionDetalle> findByTipoDonacion(String tipoDonacion);
 
+    // Buscar duplicados exactos para evitar registros repetidos
+    java.util.Optional<DonacionDetalle> findByNombreDonanteAndTipoDonacionAndDetalle(
+            String nombreDonante, String tipoDonacion, String detalle);
+
 }
