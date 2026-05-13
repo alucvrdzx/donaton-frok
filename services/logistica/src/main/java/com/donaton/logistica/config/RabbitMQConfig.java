@@ -15,6 +15,9 @@ public class RabbitMQConfig {
     public static final String QUEUE = "inventario.logistica.queue";
     public static final String ROUTING_KEY = "envio.entregado";
 
+    public static final String REVERT_QUEUE = "inventario.logistica.revert.queue";
+    public static final String ROUTING_KEY_REVERTIDO = "envio.revertido";
+
     @Bean
     public TopicExchange exchange() {
         return new TopicExchange(EXCHANGE);
@@ -26,8 +29,18 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public Queue logisticaRevertQueue() {
+        return new Queue(REVERT_QUEUE, true);
+    }
+
+    @Bean
     public Binding logisticaBinding(Queue logisticaQueue, TopicExchange exchange) {
         return BindingBuilder.bind(logisticaQueue).to(exchange).with(ROUTING_KEY);
+    }
+
+    @Bean
+    public Binding logisticaRevertBinding(Queue logisticaRevertQueue, TopicExchange exchange) {
+        return BindingBuilder.bind(logisticaRevertQueue).to(exchange).with(ROUTING_KEY_REVERTIDO);
     }
 
     @Bean

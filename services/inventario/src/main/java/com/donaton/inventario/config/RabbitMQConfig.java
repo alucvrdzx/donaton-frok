@@ -25,6 +25,10 @@ public class RabbitMQConfig {
     public static final String REVERT_QUEUE = "inventario.donacion.revert.queue";
     public static final String REVERT_ROUTING_KEY = "donacion.revertida";
 
+    // Cola para revertir logística (editar/eliminar envío entregado)
+    public static final String LOGISTICA_REVERT_QUEUE = "inventario.logistica.revert.queue";
+    public static final String LOGISTICA_REVERT_ROUTING_KEY = "envio.revertido";
+
     @Bean
     public TopicExchange exchange() {
         return new TopicExchange(EXCHANGE);
@@ -46,6 +50,11 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public Queue logisticaRevertQueue() {
+        return new Queue(LOGISTICA_REVERT_QUEUE, true);
+    }
+
+    @Bean
     public Binding donacionBinding(Queue donacionQueue, TopicExchange exchange) {
         return BindingBuilder.bind(donacionQueue).to(exchange).with(DONACION_ROUTING_KEY);
     }
@@ -58,6 +67,11 @@ public class RabbitMQConfig {
     @Bean
     public Binding revertBinding(Queue revertQueue, TopicExchange exchange) {
         return BindingBuilder.bind(revertQueue).to(exchange).with(REVERT_ROUTING_KEY);
+    }
+
+    @Bean
+    public Binding logisticaRevertBinding(Queue logisticaRevertQueue, TopicExchange exchange) {
+        return BindingBuilder.bind(logisticaRevertQueue).to(exchange).with(LOGISTICA_REVERT_ROUTING_KEY);
     }
 
     @Bean

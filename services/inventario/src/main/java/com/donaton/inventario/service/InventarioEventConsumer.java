@@ -49,4 +49,16 @@ public class InventarioEventConsumer {
                 evento.getDetalle(),
                 evento.getCantidad());
     }
+
+    // Escucha reversiones de logística → devuelve stock cuando se edita/elimina un envío entregado
+    @RabbitListener(queues = "inventario.logistica.revert.queue")
+    public void procesarReversionLogistica(LogisticaEvent evento) {
+        System.out.println(">> Reversion logística: devuelto " + evento.getCantidad()
+                + " de " + evento.getDetalle() + " al inventario");
+        inventarioService.agregarStock(
+                evento.getProducto(),
+                evento.getDetalle(),
+                evento.getCantidad(),
+                "unidades");
+    }
 }

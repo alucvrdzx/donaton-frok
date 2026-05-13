@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -49,5 +50,17 @@ public class LogisticaController {
     @PutMapping("/{id}/estado")
     public Logistica actualizarEstado(@PathVariable Long id, @RequestBody Map<String, String> body) {
         return service.actualizarEstado(id, body.get("estado"));
+    }
+
+    @Operation(summary = "Editar un envío completo")
+    @PutMapping("/{id}")
+    public Logistica actualizar(@PathVariable Long id, @RequestBody Logistica datos) {
+        return service.actualizar(id, datos);
+    }
+
+    @Operation(summary = "Eliminar un envío")
+    @DeleteMapping("/{id}")
+    public void eliminar(@PathVariable Long id) {
+        service.eliminar(id);
     }
 }

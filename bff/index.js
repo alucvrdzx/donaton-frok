@@ -195,6 +195,24 @@ app.put('/api/logistica/:id/estado', async (req, res) => {
     }
 });
 
+app.put('/api/logistica/:id', async (req, res) => {
+    try {
+        const response = await axios.put(`${GATEWAY_URL}/logistica/${req.params.id}`, req.body);
+        res.json(response.data);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al actualizar el envío' });
+    }
+});
+
+app.delete('/api/logistica/:id', async (req, res) => {
+    try {
+        await axios.delete(`${GATEWAY_URL}/logistica/${req.params.id}`);
+        res.status(204).send();
+    } catch (error) {
+        res.status(500).json({ error: 'Error al eliminar el envío' });
+    }
+});
+
 // ==========================================
 // INICIAR SERVIDOR
 // ==========================================

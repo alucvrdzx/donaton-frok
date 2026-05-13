@@ -82,7 +82,17 @@ const DonacionesPage = () => {
     setNombreDonante(donacion.nombreDonante);
     setTipoDonacion(donacion.tipoDonacion);
     setCantidad(donacion.cantidad);
-    setDetalle(donacion.detalle);
+    
+    // Verificar si el detalle existe en el catálogo
+    const productosCategoria = catalogoProductos[donacion.tipoDonacion] || [];
+    if (productosCategoria.includes(donacion.detalle)) {
+      setDetalle(donacion.detalle);
+      setModoNuevoProducto(false);
+    } else {
+      // Producto custom: activar modo texto
+      setModoNuevoProducto(true);
+      setProductoCustom(donacion.detalle);
+    }
   };
 
   const cancelarEdicion = () => {

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import catalogoProductos from '../data/catalogoProductos';
 
 const LogisticaPage = () => {
   const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
@@ -8,12 +9,13 @@ const LogisticaPage = () => {
   const [inventario, setInventario] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingInv, setLoadingInv] = useState(true);
+  const [editandoId, setEditandoId] = useState(null);
 
   const [destino, setDestino] = useState('');
   const [estado, setEstado] = useState('PENDIENTE');
-  const [producto, setProducto] = useState('ROPA');
+  const [producto, setProducto] = useState(Object.keys(catalogoProductos)[0]);
   const [cantidad, setCantidad] = useState('');
-  const [detalle, setDetalle] = useState('');
+  const [detalle, setDetalle] = useState(catalogoProductos[Object.keys(catalogoProductos)[0]][0]);
 
   const fetchLogistica = async () => {
     setLoading(true);
@@ -32,8 +34,7 @@ const LogisticaPage = () => {
     try {
       const response = await fetch('http://localhost:3001/api/inventario');
       const data = await response.json();
-      // Filtrar los que tienen stock > 0
-      setInventario(data.filter(item => item.stock > 0));
+      setInventario(Array.isArray(data) ? data.filter(item => item.stock > 0) : []);
     } catch (error) {
       console.error("Error al cargar inventario:", error);
     }
@@ -45,44 +46,94 @@ const LogisticaPage = () => {
     fetchInventario();
   }, []);
 
+  const getStockDisponible = () => {
+    const item = inventario.find(i => i.producto === producto && i.detalle === detalle);
+    return item ? item.stock : 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validar cantidad contra inventario disponible
-    const itemInventario = inventario.find(i => i.producto === producto && i.detalle === detalle);
-    if (!itemInventario) {
-      if (!window.confirm(`Advertencia: No se encontró '${detalle}' de tipo '${producto}' en el inventario actual. ¿Deseas enviarlo de todos modos?`)) {
+    const stockDisponible = getStockDisponible();
+    const cantidadNum = parseFloat(cantidad);
+
+    // Validar stock al crear (no al editar, porque el editado ya descontó)
+    if (!editandoId) {
+      if (stockDisponible <= 0) {
+        alert(`No hay stock disponible de "${detalle}" en la categoría "${producto}". Primero debe registrarse una donación.`);
         return;
       }
-    } else if (parseFloat(cantidad) > itemInventario.stock) {
-      alert(`Error: La cantidad solicitada (${cantidad}) excede el stock disponible (${itemInventario.stock}).`);
-      return;
+      if (cantidadNum > stockDisponible) {
+        alert(`Stock insuficiente. Disponible: ${stockDisponible}. Solicitado: ${cantidadNum}.`);
+        return;
+      }
     }
 
-    const nuevoEnvio = {
+    const envioData = {
       destino,
-      estado,
+      estado: editandoId ? undefined : estado, // No cambiar estado al editar
       producto,
-      cantidad: parseFloat(cantidad),
+      cantidad: cantidadNum,
       detalle
     };
 
     try {
-      await fetch('http://localhost:3001/api/logistica', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(nuevoEnvio)
-      });
+      if (editandoId) {
+        await fetch(`http://localhost:3001/api/logistica/${editandoId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(envioData)
+        });
+        alert("¡Envío actualizado correctamente!");
+      } else {
+        await fetch('http://localhost:3001/api/logistica', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...envioData, estado })
+        });
+        alert("¡Envío logístico creado!");
+      }
 
-      setDestino('');
-      setEstado('PENDIENTE');
-      setProducto('ROPA');
-      setCantidad('');
-      setDetalle('');
+      cancelarEdicion();
       fetchLogistica();
-      alert("¡Envío logístico creado!");
+      fetchInventario();
     } catch (error) {
-      alert("Hubo un error al crear el envío.");
+      alert("Hubo un error al procesar el envío.");
+    }
+  };
+
+  const editarEnvio = (envio) => {
+    setEditandoId(envio.id);
+    setDestino(envio.destino || '');
+    setProducto(envio.producto || Object.keys(catalogoProductos)[0]);
+    setCantidad(envio.cantidad?.toString() || '');
+    setDetalle(envio.detalle || '');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const cancelarEdicion = () => {
+    setEditandoId(null);
+    setDestino('');
+    setEstado('PENDIENTE');
+    setProducto(Object.keys(catalogoProductos)[0]);
+    setCantidad('');
+    setDetalle(catalogoProductos[Object.keys(catalogoProductos)[0]][0]);
+  };
+
+  const eliminarEnvio = async (envio) => {
+    const msg = envio.estado === 'ENTREGADO'
+      ? `Este envío ya fue entregado. Al eliminarlo, se devolverán ${envio.cantidad} unidades de "${envio.detalle}" al inventario. ¿Continuar?`
+      : `¿Eliminar el envío #${envio.id} a "${envio.destino}"?`;
+    
+    if (window.confirm(msg)) {
+      try {
+        await fetch(`http://localhost:3001/api/logistica/${envio.id}`, { method: 'DELETE' });
+        fetchLogistica();
+        fetchInventario();
+        alert("Envío eliminado.");
+      } catch (error) {
+        alert("Error al eliminar el envío.");
+      }
     }
   };
 
@@ -95,7 +146,7 @@ const LogisticaPage = () => {
           body: JSON.stringify({ estado: 'ENTREGADO' })
         });
         fetchLogistica();
-        fetchInventario(); // Refrescar inventario tras descontar
+        fetchInventario();
         alert("¡Envío marcado como entregado! El inventario se actualizó automáticamente.");
       } catch (error) {
         alert("Error al actualizar el estado.");
@@ -104,11 +155,11 @@ const LogisticaPage = () => {
   };
 
   const autocompletarDesdeInventario = (item) => {
-    setProducto(item.producto || 'ROPA');
+    setProducto(item.producto || Object.keys(catalogoProductos)[0]);
     setDetalle(item.detalle || '');
-    // Opcional: prellenar con todo el stock, o dejar vacio para que el usuario elija
-    // setCantidad(item.stock.toString()); 
   };
+
+  const stockActual = getStockDisponible();
 
   return (
     <div className="page-container">
@@ -124,8 +175,12 @@ const LogisticaPage = () => {
 
         {/* Formulario */}
         <div className="stat-card" style={{ textAlign: 'left', margin: 0, height: '100%' }}>
-          <h3 style={{ marginTop: 0 }}>Crear Envío</h3>
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Selecciona un item del inventario o escribe los detalles manualmente.</p>
+          <h3 style={{ marginTop: 0 }}>
+            {editandoId ? `Editando Envío #${editandoId}` : 'Crear Envío'}
+          </h3>
+          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+            Selecciona un item del inventario o elige del catálogo.
+          </p>
           <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
             <input
               type="text"
@@ -133,29 +188,36 @@ const LogisticaPage = () => {
               required
               value={destino}
               onChange={(e) => setDestino(e.target.value)}
-              
             />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <select
                 value={producto}
-                onChange={(e) => setProducto(e.target.value)}
-                
+                onChange={(e) => {
+                  setProducto(e.target.value);
+                  setDetalle(catalogoProductos[e.target.value]?.[0] || '');
+                }}
               >
-                <option value="ROPA">ROPA</option>
-                <option value="ALIMENTO">ALIMENTO</option>
-                <option value="BEBESTIBLE">BEBESTIBLE</option>
-                <option value="MONETARIA">MONETARIA</option>
+                {Object.keys(catalogoProductos).map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
               </select>
-              <input
-                type="text"
-                placeholder="Detalle (ej: Arroz)"
-                required
+              <select
                 value={detalle}
                 onChange={(e) => setDetalle(e.target.value)}
-                
-              />
+                required
+              >
+                {(catalogoProductos[producto] || []).map(prod => (
+                  <option key={prod} value={prod}>{prod}</option>
+                ))}
+              </select>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+
+            {/* Indicador de stock disponible */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem'
+            }}>
               <input
                 type="number"
                 step="0.01"
@@ -163,21 +225,64 @@ const LogisticaPage = () => {
                 required
                 value={cantidad}
                 onChange={(e) => setCantidad(e.target.value)}
-                
+                style={{ flex: 1 }}
               />
+              <span style={{
+                fontSize: '0.85rem',
+                fontWeight: 'bold',
+                color: stockActual > 0 ? '#10b981' : '#ef4444',
+                whiteSpace: 'nowrap'
+              }}>
+                Stock: {stockActual}
+              </span>
+            </div>
+
+            {!editandoId && (
               <select
                 value={estado}
                 onChange={(e) => setEstado(e.target.value)}
-                
               >
                 <option value="PENDIENTE">PENDIENTE</option>
                 <option value="EN_TRANSITO">EN TRÁNSITO</option>
               </select>
-            </div>
+            )}
 
-            <button type="submit" style={{ padding: '1rem', borderRadius: '8px', background: '#f59e0b', color: 'white', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '0.5rem' }}>
-              Despachar Envío
-            </button>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button
+                type="submit"
+                disabled={!editandoId && stockActual <= 0}
+                style={{
+                  flex: 1,
+                  padding: '1rem',
+                  borderRadius: '8px',
+                  background: editandoId ? '#3b82f6' : (stockActual > 0 ? '#f59e0b' : '#6b7280'),
+                  color: 'white',
+                  border: 'none',
+                  fontWeight: 'bold',
+                  cursor: !editandoId && stockActual <= 0 ? 'not-allowed' : 'pointer',
+                  opacity: !editandoId && stockActual <= 0 ? 0.5 : 1
+                }}
+              >
+                {editandoId ? 'Actualizar Envío' : (stockActual > 0 ? 'Despachar Envío' : 'Sin Stock Disponible')}
+              </button>
+              {editandoId && (
+                <button
+                  type="button"
+                  onClick={cancelarEdicion}
+                  style={{
+                    padding: '1rem',
+                    borderRadius: '8px',
+                    background: 'rgba(255,255,255,0.1)',
+                    color: 'var(--text-primary)',
+                    border: 'none',
+                    fontWeight: 'bold',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancelar
+                </button>
+              )}
+            </div>
           </form>
         </div>
 
@@ -266,7 +371,7 @@ const LogisticaPage = () => {
             </thead>
             <tbody>
               {logistica.map((l) => (
-                <tr key={l.id}>
+                <tr key={l.id} style={editandoId === l.id ? { background: 'rgba(59, 130, 246, 0.1)' } : {}}>
                   <td>#{l.id}</td>
                   <td style={{ fontWeight: '500' }}>{l.destino}</td>
                   <td>
@@ -285,17 +390,31 @@ const LogisticaPage = () => {
                   </td>
                   {rol !== 'USER' && rol !== 'GUEST' && (
                     <td>
-                      {l.estado !== 'ENTREGADO' ? (
+                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        {l.estado !== 'ENTREGADO' && (
+                          <button
+                            onClick={() => marcarEntregado(l.id)}
+                            className="action-btn"
+                            style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', cursor: 'pointer', fontSize: '0.8rem', padding: '0.4rem 0.7rem', borderRadius: '6px' }}
+                          >
+                            ✓ Entregar
+                          </button>
+                        )}
                         <button
-                          onClick={() => marcarEntregado(l.id)}
+                          onClick={() => editarEnvio(l)}
                           className="action-btn"
-                          style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', cursor: 'pointer' }}
+                          style={{ background: 'rgba(59, 130, 246, 0.2)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.3)', cursor: 'pointer', fontSize: '0.8rem', padding: '0.4rem 0.7rem', borderRadius: '6px' }}
                         >
-                          Marcar Entregado
+                          ✎ Editar
                         </button>
-                      ) : (
-                        <span style={{ color: 'var(--text-secondary)' }}>✅ Completado</span>
-                      )}
+                        <button
+                          onClick={() => eliminarEnvio(l)}
+                          className="action-btn"
+                          style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', cursor: 'pointer', fontSize: '0.8rem', padding: '0.4rem 0.7rem', borderRadius: '6px' }}
+                        >
+                          ✕ Eliminar
+                        </button>
+                      </div>
                     </td>
                   )}
                 </tr>
