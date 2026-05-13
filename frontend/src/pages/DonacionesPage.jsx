@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 const DonacionesPage = () => {
+  const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
+  const rol = user ? user.rol : 'GUEST';
+
   const [donaciones, setDonaciones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editandoId, setEditandoId] = useState(null);
@@ -100,6 +104,18 @@ const DonacionesPage = () => {
       </header>
 
       {/* Formulario Sencillo */}
+      {rol === 'GUEST' ? (
+        <div className="stat-card" style={{ marginBottom: '3rem', textAlign: 'center', padding: '3rem' }}>
+          <h3 style={{ fontSize: '1.8rem', marginBottom: '1rem' }}>¡Únete a nuestra causa!</h3>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', fontSize: '1.1rem' }}>
+            Para registrar una nueva donación necesitas iniciar sesión o crear una cuenta gratuita.
+          </p>
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+            <Link to="/login" className="btn-login" style={{ padding: '0.8rem 2rem' }}>Iniciar Sesión</Link>
+            <Link to="/register" className="btn-register" style={{ padding: '0.8rem 2rem' }}>Crear Cuenta</Link>
+          </div>
+        </div>
+      ) : (
       <div className="stat-card" style={{ marginBottom: '3rem', textAlign: 'left' }}>
         <h3>{editandoId ? `Editando Donación #${editandoId}` : 'Registrar Nueva Donación'}</h3>
         <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
@@ -155,6 +171,7 @@ const DonacionesPage = () => {
           </div>
         </form>
       </div>
+      )}
 
       {/* Lista de Donaciones */}
       <h3>Listado Actual</h3>
@@ -168,7 +185,7 @@ const DonacionesPage = () => {
                 <th>Tipo</th>
                 <th>Cantidad</th>
                 <th>Detalle</th>
-                <th>Acciones</th>
+                {rol !== 'USER' && rol !== 'GUEST' && <th>Acciones</th>}
               </tr>
             </thead>
             <tbody>
@@ -183,23 +200,25 @@ const DonacionesPage = () => {
                   </td>
                   <td>{d.cantidad} {d.unidadMedida}</td>
                   <td>{d.detalle}</td>
-                  <td>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button 
-                        onClick={() => cargarParaEditar(d)}
-                        className="action-btn"
-                        style={{ background: 'rgba(59, 130, 246, 0.2)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.3)' }}
-                      >
-                        Editar
-                      </button>
-                      <button 
-                        onClick={() => eliminarDonacion(d.id)}
-                        className="action-btn btn-danger"
-                      >
-                        Eliminar
-                      </button>
-                    </div>
-                  </td>
+                  {rol !== 'USER' && rol !== 'GUEST' && (
+                    <td>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button 
+                          onClick={() => cargarParaEditar(d)}
+                          className="action-btn"
+                          style={{ background: 'rgba(59, 130, 246, 0.2)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.3)' }}
+                        >
+                          Editar
+                        </button>
+                        <button 
+                          onClick={() => eliminarDonacion(d.id)}
+                          className="action-btn btn-danger"
+                        >
+                          Eliminar
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
               {donaciones.length === 0 && (

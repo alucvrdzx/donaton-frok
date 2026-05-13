@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 
 const LogisticaPage = () => {
+  const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
+  const rol = user ? user.rol : 'GUEST';
+
   const [logistica, setLogistica] = useState([]);
   const [inventario, setInventario] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -116,8 +119,8 @@ const LogisticaPage = () => {
         </p>
       </header>
 
-      {/* Grid superior: Formulario + Inventario Dispobible */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '3rem' }}>
+      {rol !== 'USER' && rol !== 'GUEST' && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '3rem' }}>
 
         {/* Formulario */}
         <div className="stat-card" style={{ textAlign: 'left', margin: 0, height: '100%' }}>
@@ -242,8 +245,8 @@ const LogisticaPage = () => {
             </div>
           )}
         </div>
-
-      </div>
+        </div>
+      )}
 
       {/* Lista de Envíos */}
       <h3>Envíos Actuales</h3>
@@ -258,7 +261,7 @@ const LogisticaPage = () => {
                 <th>Cantidad</th>
                 <th>Detalle</th>
                 <th>Estado</th>
-                <th>Acciones</th>
+                {rol !== 'USER' && rol !== 'GUEST' && <th>Acciones</th>}
               </tr>
             </thead>
             <tbody>
@@ -280,19 +283,21 @@ const LogisticaPage = () => {
                       {l.estado}
                     </span>
                   </td>
-                  <td>
-                    {l.estado !== 'ENTREGADO' ? (
-                      <button
-                        onClick={() => marcarEntregado(l.id)}
-                        className="action-btn"
-                        style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', cursor: 'pointer' }}
-                      >
-                        Marcar Entregado
-                      </button>
-                    ) : (
-                      <span style={{ color: 'var(--text-secondary)' }}>✅ Completado</span>
-                    )}
-                  </td>
+                  {rol !== 'USER' && rol !== 'GUEST' && (
+                    <td>
+                      {l.estado !== 'ENTREGADO' ? (
+                        <button
+                          onClick={() => marcarEntregado(l.id)}
+                          className="action-btn"
+                          style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', cursor: 'pointer' }}
+                        >
+                          Marcar Entregado
+                        </button>
+                      ) : (
+                        <span style={{ color: 'var(--text-secondary)' }}>✅ Completado</span>
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))}
               {logistica.length === 0 && (

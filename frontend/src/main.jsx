@@ -7,6 +7,9 @@ import HomePage from './pages/HomePage.jsx'
 import DonacionesPage from './pages/DonacionesPage.jsx'
 import InventarioPage from './pages/InventarioPage.jsx'
 import LogisticaPage from './pages/LogisticaPage.jsx'
+import LoginPage from './pages/LoginPage.jsx'
+import RegisterPage from './pages/RegisterPage.jsx'
+import UsuariosPage from './pages/UsuariosPage.jsx'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -17,6 +20,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="donaciones" element={<DonacionesPage />} />
           <Route path="inventario" element={<InventarioPage />} />
           <Route path="logistica" element={<LogisticaPage />} />
+          <Route path="login" element={<LoginPage />} />
+          <Route path="register" element={<RegisterPage />} />
+          <Route path="usuarios" element={<UsuariosPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

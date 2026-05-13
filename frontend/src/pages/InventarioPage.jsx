@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 
 const InventarioPage = () => {
+  const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
+  const rol = user ? user.rol : 'GUEST';
+
   const [inventario, setInventario] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -62,8 +65,9 @@ const InventarioPage = () => {
         </p>
       </header>
 
-      <div className="stat-card" style={{ marginBottom: '3rem', textAlign: 'left' }}>
-        <h3>Agregar Producto Manualmente</h3>
+      {rol !== 'USER' && rol !== 'GUEST' && (
+        <div className="stat-card" style={{ marginBottom: '3rem', textAlign: 'left' }}>
+          <h3>Agregar Producto Manualmente</h3>
         <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
           <input 
             type="text" 
@@ -107,6 +111,7 @@ const InventarioPage = () => {
           </button>
         </form>
       </div>
+      )}
 
       <h3>Listado de Inventario</h3>
       {loading ? <p>Cargando...</p> : (
