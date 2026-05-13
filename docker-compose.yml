@@ -93,12 +93,43 @@ services:
       - DONACIONES_URI=http://donaciones:8081
       - INVENTARIO_URI=http://inventario:8082
       - LOGISTICA_URI=http://logistica:8083
+      - AUTH_URI=http://auth-service:8084
     networks:
       - microservicios-net
     depends_on:
       - donaciones
       - inventario
       - logistica
+      - auth-service
+
+  postgres_auth:
+    image: postgres:15-alpine
+    container_name: postgres-auth
+    environment:
+      POSTGRES_DB: humanitarian_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+    ports:
+      - "5435:5432"
+    networks:
+      - microservicios-net
+    volumes:
+      - db_data_auth:/var/lib/postgresql/data
+
+  auth-service:
+    build: ./services/authservice
+    container_name: auth-service-container
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres_auth:5432/humanitarian_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 1234
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    depends_on:
+      - postgres_auth
+    networks:
+      - microservicios-net
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -115,3 +146,6 @@ services:
 networks:
   microservicios-net:
     driver: bridge
+
+volumes:
+  db_data_auth:
