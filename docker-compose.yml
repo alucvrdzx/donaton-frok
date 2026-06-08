@@ -36,6 +36,18 @@ services:
     networks:
       - microservicios-net
 
+  postgres_necesidades:
+    image: postgres:16
+    container_name: postgres_necesidades
+    environment:
+      POSTGRES_DB: necesidades
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5436:5432"
+    networks:
+      - microservicios-net
+
   donaciones:
     build: ./services/donaciones
     container_name: donaciones
@@ -84,6 +96,22 @@ services:
     networks:
       - microservicios-net
 
+  necesidades:
+    build: ./services/necesidades
+    container_name: necesidades
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres_necesidades:5432/necesidades
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: admin123
+      SPRING_RABBITMQ_HOST: rabbitmq
+    depends_on:
+      - postgres_necesidades
+      - rabbitmq
+    networks:
+      - microservicios-net
+
   gateway:
     build: ./services/gateway
     container_name: gateway
@@ -94,6 +122,7 @@ services:
       - INVENTARIO_URI=http://inventario:8082
       - LOGISTICA_URI=http://logistica:8083
       - AUTH_URI=http://auth-service:8084
+      - NECESIDADES_URI=http://necesidades:8085
     networks:
       - microservicios-net
     depends_on:
@@ -101,6 +130,7 @@ services:
       - inventario
       - logistica
       - auth-service
+      - necesidades
 
   postgres_auth:
     image: postgres:15-alpine
