@@ -12,11 +12,16 @@ const DonacionesPage = () => {
 
   // Estados para el formulario
   const [nombreDonante, setNombreDonante] = useState(user?.nombre || '');
+  const [emailDonante, setEmailDonante] = useState(user?.email || '');
   const [tipoDonacion, setTipoDonacion] = useState('ROPA');
   const [cantidad, setCantidad] = useState('');
   const [detalle, setDetalle] = useState(catalogoProductos['ROPA'][0]);
   const [modoNuevoProducto, setModoNuevoProducto] = useState(false);
   const [productoCustom, setProductoCustom] = useState('');
+
+  // Estado para el toast de confirmación
+  const [toast, setToast] = useState({ visible: false, type: '', message: '', submessage: '' });
+  const [enviando, setEnviando] = useState(false);
 
   const fetchDonaciones = async () => {
     setLoading(true);
@@ -34,17 +39,34 @@ const DonacionesPage = () => {
     fetchDonaciones();
   }, []);
 
+  // Auto-cerrar toast después de 5 segundos
+  useEffect(() => {
+    if (toast.visible) {
+      const timer = setTimeout(() => {
+        setToast(prev => ({ ...prev, visible: false }));
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast.visible]);
+
+  const mostrarToast = (type, message, submessage = '') => {
+    setToast({ visible: true, type, message, submessage });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     const detalleFinal = modoNuevoProducto ? productoCustom.trim() : detalle;
     if (!detalleFinal) {
-      alert('Debes seleccionar o crear un producto.');
+      mostrarToast('error', 'Debes seleccionar o crear un producto.');
       return;
     }
 
+    setEnviando(true);
+
     const donacionData = {
       nombreDonante,
+      emailDonante,
       tipoDonacion,
       cantidad: parseFloat(cantidad),
       detalle: detalleFinal
@@ -58,23 +80,33 @@ const DonacionesPage = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(donacionData)
         });
-        alert("¡Donación actualizada con éxito!");
+        mostrarToast('success', '¡Donación actualizada con éxito!', 'Los cambios se guardaron correctamente.');
       } else {
         // Crear nueva
-        await fetch('http://localhost:3001/api/donaciones', {
+        const response = await fetch('http://localhost:3001/api/donaciones', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(donacionData)
         });
-        alert("¡Donación registrada con éxito!");
+        const result = await response.json();
+
+        if (result.emailEnviado) {
+          mostrarToast('success', '¡Donación registrada con éxito!', `📧 Se envió un correo de confirmación a ${emailDonante}`);
+        } else if (emailDonante) {
+          mostrarToast('warning', '¡Donación registrada!', 'No se pudo enviar el correo de confirmación, pero la donación quedó registrada.');
+        } else {
+          mostrarToast('success', '¡Donación registrada con éxito!', 'Gracias por tu generosidad.');
+        }
       }
       
       // Limpiar formulario y recargar lista
       cancelarEdicion();
       fetchDonaciones();
     } catch (error) {
-      alert("Hubo un error al procesar la donación.");
+      mostrarToast('error', 'Error al procesar la donación', 'Por favor intenta de nuevo.');
     }
+
+    setEnviando(false);
   };
 
   const cargarParaEditar = (donacion) => {
@@ -98,6 +130,7 @@ const DonacionesPage = () => {
   const cancelarEdicion = () => {
     setEditandoId(null);
     setNombreDonante(user?.nombre || '');
+    setEmailDonante(user?.email || '');
     setCantidad('');
     setDetalle(catalogoProductos[tipoDonacion]?.[0] || '');
     setTipoDonacion('ROPA');
@@ -111,18 +144,99 @@ const DonacionesPage = () => {
         await fetch(`http://localhost:3001/api/donaciones/${id}`, {
           method: 'DELETE'
         });
+        mostrarToast('success', 'Donación eliminada correctamente.');
         fetchDonaciones();
       } catch (error) {
-        alert("Error al eliminar.");
+        mostrarToast('error', 'Error al eliminar la donación.');
       }
     }
   };
+
+  // Estilos del toast
+  const toastStyles = {
+    container: {
+      position: 'fixed',
+      top: '2rem',
+      right: '2rem',
+      zIndex: 9999,
+      minWidth: '360px',
+      maxWidth: '450px',
+      padding: '1.2rem 1.5rem',
+      borderRadius: '16px',
+      backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)',
+      boxShadow: '0 20px 50px rgba(0, 0, 0, 0.4)',
+      transform: toast.visible ? 'translateX(0)' : 'translateX(120%)',
+      opacity: toast.visible ? 1 : 0,
+      transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: '1rem',
+      border: '1px solid',
+      ...(toast.type === 'success' && {
+        background: 'rgba(16, 185, 129, 0.12)',
+        borderColor: 'rgba(16, 185, 129, 0.3)',
+      }),
+      ...(toast.type === 'error' && {
+        background: 'rgba(239, 68, 68, 0.12)',
+        borderColor: 'rgba(239, 68, 68, 0.3)',
+      }),
+      ...(toast.type === 'warning' && {
+        background: 'rgba(245, 158, 11, 0.12)',
+        borderColor: 'rgba(245, 158, 11, 0.3)',
+      }),
+    },
+    icon: {
+      fontSize: '1.8rem',
+      flexShrink: 0,
+      marginTop: '2px',
+    },
+    closeBtn: {
+      position: 'absolute',
+      top: '0.8rem',
+      right: '0.8rem',
+      background: 'none',
+      border: 'none',
+      color: 'var(--text-secondary)',
+      cursor: 'pointer',
+      fontSize: '1.1rem',
+      padding: '4px',
+      lineHeight: 1,
+      opacity: 0.6,
+      transition: 'opacity 0.2s',
+    }
+  };
+
+  const toastIcons = { success: '✅', error: '❌', warning: '⚠️' };
 
   return (
     <div className="page-container">
       <header className="header" style={{ marginBottom: '2rem' }}>
         <h1>Gestión de Donaciones</h1>
       </header>
+
+      {/* Toast de notificación */}
+      <div style={toastStyles.container}>
+        <span style={toastStyles.icon}>{toastIcons[toast.type]}</span>
+        <div style={{ flex: 1 }}>
+          <p style={{ margin: '0 0 4px 0', fontWeight: '700', fontSize: '1rem', color: 'var(--text-primary)' }}>
+            {toast.message}
+          </p>
+          {toast.submessage && (
+            <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+              {toast.submessage}
+            </p>
+          )}
+        </div>
+        <button 
+          style={toastStyles.closeBtn}
+          onClick={() => setToast(prev => ({ ...prev, visible: false }))}
+          onMouseEnter={e => e.target.style.opacity = '1'}
+          onMouseLeave={e => e.target.style.opacity = '0.6'}
+        >
+          ✕
+        </button>
+      </div>
 
       {/* Formulario Sencillo */}
       {rol === 'GUEST' ? (
@@ -150,6 +264,28 @@ const DonacionesPage = () => {
             disabled={!!user?.nombre}
             style={user?.nombre ? { opacity: 0.7, cursor: 'not-allowed' } : {}}
           />
+
+          {/* Campo de Email — NUEVO */}
+          <div style={{ position: 'relative' }}>
+            <input 
+              type="email" 
+              placeholder="Correo electrónico (para recibir confirmación)" 
+              value={emailDonante}
+              onChange={(e) => setEmailDonante(e.target.value)}
+              style={{ paddingLeft: '2.8rem' }}
+            />
+            <span style={{
+              position: 'absolute',
+              left: '1rem',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              fontSize: '1.1rem',
+              opacity: 0.5,
+              pointerEvents: 'none'
+            }}>
+              📧
+            </span>
+          </div>
 
           <select 
             value={tipoDonacion}
@@ -219,8 +355,45 @@ const DonacionesPage = () => {
           />
 
           <div style={{ display: 'flex', gap: '1rem' }}>
-            <button type="submit" style={{ flex: 1, padding: '1rem', borderRadius: '8px', background: editandoId ? '#3b82f6' : 'var(--primary-color)', color: 'white', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
-              {editandoId ? 'Actualizar Donación' : 'Registrar Donación'}
+            <button 
+              type="submit" 
+              disabled={enviando}
+              style={{ 
+                flex: 1, 
+                padding: '1rem', 
+                borderRadius: '8px', 
+                background: enviando 
+                  ? 'rgba(99, 102, 241, 0.3)' 
+                  : editandoId 
+                    ? '#3b82f6' 
+                    : 'var(--primary-color)', 
+                color: 'white', 
+                border: 'none', 
+                fontWeight: 'bold', 
+                cursor: enviando ? 'wait' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              {enviando ? (
+                <>
+                  <span style={{
+                    display: 'inline-block',
+                    width: '18px',
+                    height: '18px',
+                    border: '2px solid rgba(255,255,255,0.3)',
+                    borderTopColor: '#fff',
+                    borderRadius: '50%',
+                    animation: 'spin 0.8s linear infinite'
+                  }}></span>
+                  Procesando...
+                </>
+              ) : (
+                editandoId ? 'Actualizar Donación' : 'Registrar Donación'
+              )}
             </button>
             {editandoId && (
               <button type="button" onClick={cancelarEdicion} style={{ padding: '1rem', borderRadius: '8px', background: 'rgba(255,255,255,0.1)', color: 'var(--text-primary)', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
