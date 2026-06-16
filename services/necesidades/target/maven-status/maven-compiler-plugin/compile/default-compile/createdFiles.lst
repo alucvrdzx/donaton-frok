@@ -1,0 +1,13 @@
+com\donaton\necesidades\exception\ResourceNotFoundException.class
+com\donaton\necesidades\NecesidadesApplication.class
+com\donaton\necesidades\model\Necesidad.class
+com\donaton\necesidades\OpenApiConfig.class
+com\donaton\necesidades\dto\NecesidadEvent.class
+com\donaton\necesidades\repository\NecesidadRepository.class
+com\donaton\necesidades\exception\GlobalExceptionHandler.class
+com\donaton\necesidades\model\EstadoNecesidad.class
+com\donaton\necesidades\dto\NecesidadRequest.class
+com\donaton\necesidades\exception\ErrorResponse.class
+com\donaton\necesidades\service\NecesidadService.class
+com\donaton\necesidades\config\RabbitMQConfig.class
+com\donaton\necesidades\controller\NecesidadController.class
