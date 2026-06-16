@@ -10,6 +10,7 @@ import LogisticaPage from './pages/LogisticaPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import RegisterPage from './pages/RegisterPage.jsx'
 import UsuariosPage from './pages/UsuariosPage.jsx'
+import NecesidadesPage from './pages/NecesidadesPage.jsx'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -23,6 +24,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="login" element={<LoginPage />} />
           <Route path="register" element={<RegisterPage />} />
           <Route path="usuarios" element={<UsuariosPage />} />
+          <Route path="necesidades" element={<NecesidadesPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -24,24 +24,25 @@ cd donaton
 ### Paso 2: Compilar los Microservicios (Backend)
 Debido a que nuestros Dockerfiles utilizan los archivos compilados (`.jar`), debes empaquetar los microservicios usando Maven.
 
-Ejecuta el siguiente comando desde la raíz del proyecto para compilar los 5 servicios (Auth, Donaciones, Inventario, Logística y Gateway):
+Ejecuta el siguiente comando desde la raíz del proyecto para compilar los 6 servicios (Auth, Donaciones, Inventario, Logística, Necesidades y Gateway):
 *(Si estás en Windows PowerShell)*:
 ```powershell
 cd services\authservice; .\mvnw.cmd clean package -DskipTests -q; cd ..\..
 cd services\donaciones; .\mvnw.cmd clean package -DskipTests -q; cd ..\..
 cd services\inventario; .\mvnw.cmd clean package -DskipTests -q; cd ..\..
 cd services\logistica; .\mvnw.cmd clean package -DskipTests -q; cd ..\..
+cd services\necesidades; .\mvnw.cmd clean package -DskipTests -q; cd ..\..
 cd services\gateway; .\mvnw.cmd clean package -DskipTests -q; cd ..\..
 ```
 
 ### Paso 3: Levantar la Infraestructura con Docker Compose
-Este es el paso mágico. Docker descargará PostgreSQL, creará las 4 bases de datos, levantará los 5 microservicios en Java y configurará las redes automáticamente.
+Este es el paso mágico. Docker descargará PostgreSQL, creará las 5 bases de datos, levantará los 6 microservicios en Java y configurará las redes automáticamente.
 
 En la raíz del proyecto (donde está el archivo `docker-compose.yml`), ejecuta:
 ```bash
 docker-compose up -d --build
 ```
-> Nota: El parámetro `-d` hace que los contenedores corran en segundo plano. Puedes usar `docker ps` para verificar que los 9 contenedores estén corriendo (`gateway`, `auth-service-container`, `logistica`, `inventario`, `donaciones` y las 4 bases de datos de postgres).
+> Nota: El parámetro `-d` hace que los contenedores corran en segundo plano. Puedes usar `docker ps` para verificar que los 11 contenedores estén corriendo (`gateway`, `auth-service-container`, `logistica`, `inventario`, `donaciones`, `necesidades` y las 5 bases de datos de postgres + `rabbitmq`).
 
 ### Paso 4: Levantar el Backend For Frontend (BFF)
 El BFF es un puente de Node.js que conecta a React con el API Gateway de Java.
@@ -80,6 +81,7 @@ Una vez completados los 5 pasos, tendrás acceso a todo el ecosistema:
 - **Donaciones**: [http://localhost:8081/swagger-ui/index.html](http://localhost:8081/swagger-ui/index.html)
 - **Inventario**: [http://localhost:8082/swagger-ui/index.html](http://localhost:8082/swagger-ui/index.html)
 - **Logística**: [http://localhost:8083/swagger-ui/index.html](http://localhost:8083/swagger-ui/index.html)
+- **Necesidades**: [http://localhost:8085/swagger-ui/index.html](http://localhost:8085/swagger-ui/index.html)
 
 ---
 

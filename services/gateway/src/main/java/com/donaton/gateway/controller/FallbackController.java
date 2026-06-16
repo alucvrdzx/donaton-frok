@@ -23,4 +23,10 @@ public class FallbackController {
 
         return "Servicio de logística temporalmente no disponible";
     }
+
+    @GetMapping("/fallback/necesidades")
+    public String necesidadesFallback() {
+
+        return "Servicio de necesidades temporalmente no disponible";
+    }
 }
