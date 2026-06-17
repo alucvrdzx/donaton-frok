@@ -17,7 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 import com.donaton.donaciones.factory.DonacionFactory;
-import com.donaton.donaciones.model.DonacionDetalle;
+import com.donaton.donaciones.model.Donacion;
 import com.donaton.donaciones.repository.DonacionRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,7 +37,7 @@ class DonacionServiceTest {
 
     @Test
     void debeCrearDonacionNueva() {
-        DonacionDetalle donacion = new DonacionDetalle();
+        Donacion donacion = new Donacion();
 
         donacion.setNombreDonante("Juan");
         donacion.setCategoria("ROPA");
@@ -64,7 +64,7 @@ class DonacionServiceTest {
         when(repository.save(donacion))
             .thenReturn(donacion);
 
-        DonacionDetalle resultado = service.crearDonacion(
+        Donacion resultado = service.crearDonacion(
                 "Juan",
                 "ROPA",
                 "Polera",
@@ -84,7 +84,7 @@ class DonacionServiceTest {
 
     @Test
     void debeAcumularCantidadCuandoLaDonacionYaExiste() {
-        DonacionDetalle existente = new DonacionDetalle();
+        Donacion existente = new Donacion();
 
         existente.setNombreDonante("Juan");
         existente.setCategoria("ROPA");
@@ -100,10 +100,10 @@ class DonacionServiceTest {
                 "Polera"))
             .thenReturn(Optional.of(existente));
 
-        when(repository.save(any(DonacionDetalle.class)))
+        when(repository.save(any(Donacion.class)))
             .thenReturn(existente);
 
-        DonacionDetalle resultado = service.crearDonacion(
+        Donacion resultado = service.crearDonacion(
                 "Juan",
                 "ROPA",
                 "Polera",
@@ -122,7 +122,7 @@ class DonacionServiceTest {
 
     @Test
     void debeEliminarDonacionYEnviarEventoDeReversa() {
-        DonacionDetalle donacion = new DonacionDetalle();
+        Donacion donacion = new Donacion();
 
         donacion.setId(1L);
         donacion.setCategoria("ROPA");
@@ -145,7 +145,7 @@ class DonacionServiceTest {
 
     @Test
     void debeActualizarDonacionAumentandoCantidad() {
-        DonacionDetalle anterior = new DonacionDetalle();
+        Donacion anterior = new Donacion();
 
         anterior.setId(1L);
         anterior.setNombreDonante("Juan");
@@ -155,7 +155,7 @@ class DonacionServiceTest {
         anterior.setDetalle("Polera");
         anterior.setUnidadMedida("unidades");
 
-        DonacionDetalle actualizada = new DonacionDetalle();
+        Donacion actualizada = new Donacion();
 
         actualizada.setNombreDonante("Juan");
         actualizada.setCategoria("ROPA");
@@ -166,15 +166,15 @@ class DonacionServiceTest {
         when(repository.findById(1L))
                 .thenReturn(Optional.of(anterior));
 
-        when(repository.save(any(DonacionDetalle.class)))
+        when(repository.save(any(Donacion.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        DonacionDetalle resultado = service.actualizar(1L, actualizada);
+        Donacion resultado = service.actualizar(1L, actualizada);
 
         assertNotNull(resultado);
         assertEquals(15.0, resultado.getCantidad());
 
-        verify(repository).save(any(DonacionDetalle.class));
+        verify(repository).save(any(Donacion.class));
         verify(rabbitTemplate).convertAndSend(
                 anyString(),
                 anyString(),
@@ -183,7 +183,7 @@ class DonacionServiceTest {
 
     @Test
     void debeActualizarDonacionDisminuyendoCantidad() {
-        DonacionDetalle anterior = new DonacionDetalle();
+        Donacion anterior = new Donacion();
 
         anterior.setId(1L);
         anterior.setNombreDonante("Juan");
@@ -193,7 +193,7 @@ class DonacionServiceTest {
         anterior.setDetalle("Polera");
         anterior.setUnidadMedida("unidades");
 
-        DonacionDetalle actualizada = new DonacionDetalle();
+        Donacion actualizada = new Donacion();
 
         actualizada.setNombreDonante("Juan");
         actualizada.setCategoria("ROPA");
@@ -204,15 +204,15 @@ class DonacionServiceTest {
         when(repository.findById(1L))
                 .thenReturn(Optional.of(anterior));
 
-        when(repository.save(any(DonacionDetalle.class)))
+        when(repository.save(any(Donacion.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        DonacionDetalle resultado = service.actualizar(1L, actualizada);
+        Donacion resultado = service.actualizar(1L, actualizada);
 
         assertNotNull(resultado);
         assertEquals(10.0, resultado.getCantidad());
 
-        verify(repository).save(any(DonacionDetalle.class));
+        verify(repository).save(any(Donacion.class));
         verify(rabbitTemplate).convertAndSend(
                 anyString(),
                 anyString(),
@@ -221,7 +221,7 @@ class DonacionServiceTest {
 
     @Test
     void noDebeEnviarEventoSiCantidadNoCambia() {
-        DonacionDetalle anterior = new DonacionDetalle();
+        Donacion anterior = new Donacion();
 
         anterior.setId(1L);
         anterior.setNombreDonante("Juan");
@@ -231,7 +231,7 @@ class DonacionServiceTest {
         anterior.setDetalle("Polera");
         anterior.setUnidadMedida("unidades");
 
-        DonacionDetalle actualizada = new DonacionDetalle();
+        Donacion actualizada = new Donacion();
 
         actualizada.setNombreDonante("Juan");
         actualizada.setCategoria("ROPA");
@@ -242,15 +242,15 @@ class DonacionServiceTest {
         when(repository.findById(1L))
                 .thenReturn(Optional.of(anterior));
 
-        when(repository.save(any(DonacionDetalle.class)))
+        when(repository.save(any(Donacion.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        DonacionDetalle resultado = service.actualizar(1L, actualizada);
+        Donacion resultado = service.actualizar(1L, actualizada);
 
         assertNotNull(resultado);
         assertEquals(10.0, resultado.getCantidad());
 
-        verify(repository).save(any(DonacionDetalle.class));
+        verify(repository).save(any(Donacion.class));
         verify(rabbitTemplate, never()).convertAndSend(
                 anyString(),
                 anyString(),

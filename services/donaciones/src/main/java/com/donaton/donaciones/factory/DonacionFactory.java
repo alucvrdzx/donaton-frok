@@ -4,14 +4,14 @@ import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Component;
 
-import com.donaton.donaciones.model.DonacionDetalle;
+import com.donaton.donaciones.model.Donacion;
 
 @Component
 public class DonacionFactory {
 
-    public DonacionDetalle crearDonacion(String nombreDonante, String categoria, String producto, Double cantidad, String detalle) {
+    public Donacion crearDonacion(String nombreDonante, String categoria, String producto, Double cantidad, String detalle) {
 
-        DonacionDetalle donacion = new DonacionDetalle();
+        Donacion donacion = new Donacion();
         donacion.setNombreDonante(nombreDonante);
         donacion.setFechaDonacion(LocalDateTime.now());
         donacion.setCategoria(categoria.toUpperCase());

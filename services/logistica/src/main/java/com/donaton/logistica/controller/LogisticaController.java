@@ -2,7 +2,8 @@ package com.donaton.logistica.controller;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,20 +19,21 @@ import com.donaton.logistica.service.LogisticaService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/logistica")
 @CrossOrigin(origins = "*")
 @Tag(name = "Logística", description = "Controlador para la gestión logística")
+@RequiredArgsConstructor
 public class LogisticaController {
 
-    @Autowired
-    private LogisticaService service;
+    private final LogisticaService service;
 
     @Operation(summary = "Crear un nuevo registro logístico")
     @PostMapping
-    public Logistica crear(@RequestBody Logistica l) {
-        return service.crear(l);
+    public ResponseEntity<Logistica> crear(@RequestBody Logistica l) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.crear(l));
     }
 
     @Operation(summary = "Obtener listado logístico")
@@ -60,7 +62,8 @@ public class LogisticaController {
 
     @Operation(summary = "Eliminar un envío")
     @DeleteMapping("/{id}")
-    public void eliminar(@PathVariable Long id) {
+    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         service.eliminar(id);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -1,6 +1,7 @@
 package com.donaton.necesidades.service;
 
 import com.donaton.necesidades.config.RabbitMQConfig;
+import com.donaton.necesidades.dto.DonacionEvent;
 import com.donaton.necesidades.dto.NecesidadEvent;
 import com.donaton.necesidades.dto.NecesidadRequest;
 import com.donaton.necesidades.exception.ResourceNotFoundException;
@@ -10,26 +11,23 @@ import com.donaton.necesidades.repository.NecesidadRepository;
 import com.donaton.necesidades.model.OutboxEvent;
 import com.donaton.necesidades.repository.OutboxEventRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class NecesidadService {
 
-    @Autowired
-    private NecesidadRepository necesidadRepository;
-
-    @Autowired
-    private OutboxEventRepository outboxEventRepository;
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final NecesidadRepository necesidadRepository;
+    private final OutboxEventRepository outboxEventRepository;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public Necesidad crearNecesidad(NecesidadRequest request) {
@@ -98,12 +96,12 @@ public class NecesidadService {
         necesidadRepository.delete(necesidad);
     }
 
-    @org.springframework.amqp.rabbit.annotation.RabbitListener(queues = RabbitMQConfig.DONACION_QUEUE)
+    @RabbitListener(queues = RabbitMQConfig.DONACION_QUEUE)
     @Transactional
-    public void procesarMatchDonacion(com.donaton.necesidades.dto.DonacionEvent donacionEvent) {
+    public void procesarMatchDonacion(DonacionEvent donacionEvent) {
         log.info("Procesando posible match para donacion de categoria: {} - producto: {}", donacionEvent.getCategoria(), donacionEvent.getProducto());
         
-        List<EstadoNecesidad> estados = java.util.Arrays.asList(EstadoNecesidad.PENDIENTE, EstadoNecesidad.EN_PROCESO);
+        List<EstadoNecesidad> estados = Arrays.asList(EstadoNecesidad.PENDIENTE, EstadoNecesidad.EN_PROCESO);
         List<Necesidad> necesidades = necesidadRepository.findByCategoriaIgnoreCaseAndProductoIgnoreCaseAndEstadoInOrderByCreadoEnAsc(donacionEvent.getCategoria(), donacionEvent.getProducto(), estados);
         
         double cantidadDisponible = donacionEvent.getCantidad();

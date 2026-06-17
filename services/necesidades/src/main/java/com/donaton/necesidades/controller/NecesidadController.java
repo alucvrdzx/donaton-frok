@@ -7,7 +7,7 @@ import com.donaton.necesidades.service.NecesidadService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,10 +18,10 @@ import java.util.List;
 @RequestMapping("/necesidades")
 @CrossOrigin(origins = "*")
 @Tag(name = "Necesidades", description = "API para la gestión de necesidades humanitarias")
+@RequiredArgsConstructor
 public class NecesidadController {
 
-    @Autowired
-    private NecesidadService necesidadService;
+    private final NecesidadService necesidadService;
 
     @Operation(summary = "Crear una nueva necesidad y notificar asincrónicamente")
     @PostMapping

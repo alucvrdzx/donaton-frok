@@ -2,7 +2,8 @@ package com.donaton.inventario.controller;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,20 +19,21 @@ import com.donaton.inventario.service.InventarioService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/inventario")
 @CrossOrigin(origins = "*")
 @Tag(name = "Inventario", description = "Controlador para la gestión del inventario")
+@RequiredArgsConstructor
 public class InventarioController {
 
-    @Autowired
-    private InventarioService service;
+    private final InventarioService service;
 
     @Operation(summary = "Crear un nuevo registro de inventario")
     @PostMapping
-    public Inventario crear(@RequestBody Inventario i) {
-        return service.crear(i);
+    public ResponseEntity<Inventario> crear(@RequestBody Inventario i) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.crear(i));
     }
 
     @Operation(summary = "Obtener listado del inventario")
@@ -42,13 +44,14 @@ public class InventarioController {
 
     @Operation(summary = "Actualizar un registro del inventario")
     @PutMapping("/{id}")
-    public Inventario actualizar(@org.springframework.web.bind.annotation.PathVariable Long id, @RequestBody Inventario i) {
+    public Inventario actualizar(@PathVariable Long id, @RequestBody Inventario i) {
         return service.actualizar(id, i);
     }
 
     @Operation(summary = "Eliminar un registro del inventario")
-    @org.springframework.web.bind.annotation.DeleteMapping("/{id}")
-    public void eliminar(@org.springframework.web.bind.annotation.PathVariable Long id) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         service.eliminar(id);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -3,74 +3,86 @@ package com.donaton.logistica.service;
 import java.util.List;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.donaton.logistica.config.RabbitMQConfig;
 import com.donaton.logistica.dto.LogisticaEvent;
 import com.donaton.logistica.dto.LogisticaEstadoEvent;
+import com.donaton.logistica.exception.ResourceNotFoundException;
+import com.donaton.logistica.model.EstadoLogistica;
 import com.donaton.logistica.model.Logistica;
 import com.donaton.logistica.repository.LogisticaRepository;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class LogisticaService {
 
-    @Autowired
-    private LogisticaRepository repository;
+    private final LogisticaRepository repository;
+    private final RabbitTemplate rabbitTemplate;
 
-    @Autowired
-    private RabbitTemplate rabbitTemplate;
-
+    @Transactional
     public Logistica crear(Logistica l) {
+        if (l.getEstado() == null) {
+            l.setEstado(EstadoLogistica.PENDIENTE);
+        }
         return repository.save(l);
     }
 
+    @Transactional(readOnly = true)
     public List<Logistica> listar() {
         return repository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public Logistica obtenerPorId(Long id) {
-        return repository.findById(id).orElse(null);
+        return repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Envío no encontrado con ID: " + id));
     }
 
     // Actualiza el estado y si es ENTREGADO publica evento para descontar inventario
+    @Transactional
     public Logistica actualizarEstado(Long id, String estado) {
-        Logistica logistica = repository.findById(id).orElse(null);
-        if (logistica == null) return null;
+        Logistica logistica = obtenerPorId(id);
+        EstadoLogistica nuevoEstado = EstadoLogistica.valueOf(estado.toUpperCase());
 
         // Guard clause: si ya estaba ENTREGADO, no re-enviar evento
-        if ("ENTREGADO".equalsIgnoreCase(logistica.getEstado())) {
+        if (logistica.getEstado() == EstadoLogistica.ENTREGADO) {
             return logistica;
         }
 
-        logistica.setEstado(estado);
+        logistica.setEstado(nuevoEstado);
         Logistica guardada = repository.save(logistica);
 
         if (guardada.getNecesidadId() != null) {
             LogisticaEstadoEvent estadoEvent = new LogisticaEstadoEvent(guardada.getNecesidadId(), estado);
             rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY_ESTADO, estadoEvent);
-            System.out.println(">> Evento enviado: envio.estado para Necesidad " + guardada.getNecesidadId() + " -> " + estado);
+            log.info("Evento enviado: envio.estado para Necesidad {} -> {}", guardada.getNecesidadId(), estado);
         }
 
-        if ("ENTREGADO".equalsIgnoreCase(estado)) {
+        if (nuevoEstado == EstadoLogistica.ENTREGADO) {
             LogisticaEvent evento = new LogisticaEvent(
                     guardada.getCategoria(),
                     guardada.getProducto(),
                     guardada.getCantidad(),
                     guardada.getDetalle());
             rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY, evento);
-            System.out.println(">> Evento enviado: envio.entregado para " + guardada.getProducto() + " x " + guardada.getCantidad());
+            log.info("Evento enviado: envio.entregado para {} x {}", guardada.getProducto(), guardada.getCantidad());
         }
 
         return guardada;
     }
 
     // Editar un envío completo — ajusta stock si ya estaba entregado
+    @Transactional
     public Logistica actualizar(Long id, Logistica datos) {
-        Logistica anterior = repository.findById(id).orElse(null);
-        if (anterior == null) return null;
+        Logistica anterior = obtenerPorId(id);
 
-        boolean estabaEntregado = "ENTREGADO".equalsIgnoreCase(anterior.getEstado());
+        boolean estabaEntregado = anterior.getEstado() == EstadoLogistica.ENTREGADO;
         double cantidadAnterior = anterior.getCantidad();
 
         // Actualizar campos directamente en la entidad existente
@@ -90,13 +102,13 @@ public class LogisticaService {
                 LogisticaEvent evento = new LogisticaEvent(
                         guardada.getCategoria(), guardada.getProducto(), diferencia, guardada.getDetalle());
                 rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY, evento);
-                System.out.println(">> Ajuste post-entrega: descontado " + diferencia + " más de " + guardada.getDetalle());
+                log.info("Ajuste post-entrega: descontado {} más de {}", diferencia, guardada.getDetalle());
             } else if (diferencia < 0) {
                 // Disminuyó la cantidad entregada → devolver stock
                 LogisticaEvent evento = new LogisticaEvent(
                         guardada.getCategoria(), guardada.getProducto(), Math.abs(diferencia), guardada.getDetalle());
                 rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY_REVERTIDO, evento);
-                System.out.println(">> Ajuste post-entrega: devuelto " + Math.abs(diferencia) + " de " + guardada.getDetalle());
+                log.info("Ajuste post-entrega: devuelto {} de {}", Math.abs(diferencia), guardada.getDetalle());
             }
         }
 
@@ -104,21 +116,21 @@ public class LogisticaService {
     }
 
     // Eliminar un envío — si estaba ENTREGADO, devuelve todo el stock
+    @Transactional
     public void eliminar(Long id) {
-        Logistica logistica = repository.findById(id).orElse(null);
-        if (logistica == null) return;
+        Logistica logistica = obtenerPorId(id);
 
         // Si estaba ENTREGADO, devolver todo el stock al inventario
-        if ("ENTREGADO".equalsIgnoreCase(logistica.getEstado())) {
+        if (logistica.getEstado() == EstadoLogistica.ENTREGADO) {
             LogisticaEvent evento = new LogisticaEvent(
                     logistica.getCategoria(),
                     logistica.getProducto(),
                     logistica.getCantidad(),
                     logistica.getDetalle());
             rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY_REVERTIDO, evento);
-            System.out.println(">> Envío eliminado: devuelto " + logistica.getCantidad() + " de " + logistica.getDetalle() + " al inventario");
+            log.info("Envío eliminado: devuelto {} de {} al inventario", logistica.getCantidad(), logistica.getDetalle());
         }
 
         repository.deleteById(id);
     }
-}
+}

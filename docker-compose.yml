@@ -6,11 +6,16 @@ services:
     environment:
       POSTGRES_DB: donaciones
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: admin123
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-admin123}
     ports:
       - "5432:5432"
     networks:
       - microservicios-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   postgres_inventario:
     image: postgres:16
@@ -18,11 +23,16 @@ services:
     environment:
       POSTGRES_DB: inventario
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: admin123
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-admin123}
     ports:
       - "5433:5432"
     networks:
       - microservicios-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   postgres_logistica:
     image: postgres:16
@@ -30,11 +40,16 @@ services:
     environment:
       POSTGRES_DB: logistica
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: admin123
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-admin123}
     ports:
       - "5434:5432"
     networks:
       - microservicios-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   postgres_necesidades:
     image: postgres:16
@@ -42,11 +57,16 @@ services:
     environment:
       POSTGRES_DB: necesidades
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: admin123
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-admin123}
     ports:
       - "5436:5432"
     networks:
       - microservicios-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   donaciones:
     build: ./services/donaciones
@@ -56,11 +76,14 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres_donaciones:5432/donaciones
       SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: admin123
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-admin123}
       SPRING_RABBITMQ_HOST: rabbitmq
     depends_on:
-      - postgres_donaciones
-      - rabbitmq
+      postgres_donaciones:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: on-failure
     networks:
       - microservicios-net
 
@@ -72,11 +95,14 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres_inventario:5432/inventario
       SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: admin123
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-admin123}
       SPRING_RABBITMQ_HOST: rabbitmq
     depends_on:
-      - postgres_inventario
-      - rabbitmq
+      postgres_inventario:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: on-failure
     networks:
       - microservicios-net
 
@@ -88,11 +114,14 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres_logistica:5432/logistica
       SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: admin123
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-admin123}
       SPRING_RABBITMQ_HOST: rabbitmq
     depends_on:
-      - postgres_logistica
-      - rabbitmq
+      postgres_logistica:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: on-failure
     networks:
       - microservicios-net
 
@@ -104,11 +133,14 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres_necesidades:5432/necesidades
       SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: admin123
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-admin123}
       SPRING_RABBITMQ_HOST: rabbitmq
     depends_on:
-      - postgres_necesidades
-      - rabbitmq
+      postgres_necesidades:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: on-failure
     networks:
       - microservicios-net
 
@@ -131,6 +163,7 @@ services:
       - logistica
       - auth-service
       - necesidades
+    restart: on-failure
 
   postgres_auth:
     image: postgres:15-alpine
@@ -138,13 +171,18 @@ services:
     environment:
       POSTGRES_DB: humanitarian_db
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 1234
+      POSTGRES_PASSWORD: ${DB_AUTH_PASSWORD:-1234}
     ports:
       - "5435:5432"
     networks:
       - microservicios-net
     volumes:
       - db_data_auth:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   auth-service:
     build: ./services/authservice
@@ -154,10 +192,13 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres_auth:5432/humanitarian_db
       SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: 1234
+      SPRING_DATASOURCE_PASSWORD: ${DB_AUTH_PASSWORD:-1234}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      JWT_SECRET: ${JWT_SECRET:-esta_es_una_clave_secreta_muy_larga_y_segura_dev_only_123456}
     depends_on:
-      - postgres_auth
+      postgres_auth:
+        condition: service_healthy
+    restart: on-failure
     networks:
       - microservicios-net
 
@@ -172,6 +213,11 @@ services:
       RABBITMQ_DEFAULT_PASS: guest
     networks:
       - microservicios-net
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
