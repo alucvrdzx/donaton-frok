@@ -1,3 +1,4 @@
+import { Toaster } from 'sonner';
 import { Outlet, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -13,9 +14,10 @@ function App() {
 
   if (isLaboral) {
     return (
-      <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-dark)' }}>
+      <div className="admin-layout">
+        <Toaster richColors position="top-right" />
         <AdminSidebar rol={rol} />
-        <div style={{ flex: 1, marginLeft: '260px', padding: '2rem', width: 'calc(100% - 260px)' }}>
+        <div className="admin-content">
           <Outlet />
         </div>
       </div>
@@ -24,6 +26,7 @@ function App() {
 
   return (
     <>
+      <Toaster richColors position="top-right" />
       <Navbar />
       <div className="app-container">
         <main>

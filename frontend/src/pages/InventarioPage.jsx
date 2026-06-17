@@ -25,6 +25,8 @@ const InventarioPage = () => {
   const [productoCustom, setProductoCustom] = useState('');
   const [unidadMedida, setUnidadMedida] = useState('unidades');
 
+  const [editingId, setEditingId] = useState(null);
+
   const fetchInventario = async () => {
     setLoading(true);
     try {
@@ -64,11 +66,28 @@ const InventarioPage = () => {
     };
 
     try {
-      await fetch('http://localhost:3001/api/inventario', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(nuevoProducto)
-      });
+      const token = localStorage.getItem('token');
+      if (editingId) {
+        await fetch(`http://localhost:3001/api/inventario/${editingId}`, {
+          method: 'PUT',
+          headers: { 
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify(nuevoProducto)
+        });
+        alert("¡Producto actualizado!");
+      } else {
+        await fetch('http://localhost:3001/api/inventario', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify(nuevoProducto)
+        });
+        alert("¡Producto agregado al inventario!");
+      }
       
       setProducto(categoriasBase[0]);
       setNuevaCategoria('');
@@ -78,10 +97,43 @@ const InventarioPage = () => {
       setModoNuevoProducto(false);
       setProductoCustom('');
       setUnidadMedida('unidades');
+      setEditingId(null);
       fetchInventario();
-      alert("¡Producto agregado al inventario!");
     } catch (error) {
       alert("Hubo un error al guardar en el inventario.");
+    }
+  };
+
+  const handleEditInit = (item) => {
+    setEditingId(item.id);
+    setModoNuevaCategoria(false);
+    setModoNuevoProducto(false);
+    // Find the actual base category or use the custom one
+    let cat = item.producto || categoriasBase[0];
+    if (!categoriasExistentes.includes(cat)) {
+        setModoNuevaCategoria(true);
+        setNuevaCategoria(cat);
+    } else {
+        setProducto(cat);
+    }
+    setDetalle(item.detalle || '');
+    setStock(item.stock || 0);
+    setUnidadMedida(item.unidadMedida || 'unidades');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("¿Estás seguro de eliminar este producto del inventario?")) return;
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`http://localhost:3001/api/inventario/${id}`, {
+        method: 'DELETE',
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      fetchInventario();
+      alert("Producto eliminado.");
+    } catch (error) {
+      alert("Error al eliminar el producto.");
     }
   };
 
@@ -96,7 +148,7 @@ const InventarioPage = () => {
 
       {rol !== 'USER' && rol !== 'GUEST' && (
         <div className="stat-card" style={{ marginBottom: '3rem', textAlign: 'left' }}>
-          <h3>Agregar Producto Manualmente</h3>
+          <h3>{editingId ? 'Editar Producto' : 'Agregar Producto Manualmente'}</h3>
         <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
             {modoNuevaCategoria ? (
@@ -184,6 +236,15 @@ const InventarioPage = () => {
               {modoNuevoProducto ? '✕ Cancelar' : '+ Nuevo'}
             </button>
           </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
+            <input
+              type="text"
+              placeholder="Detalle o Formato opcional (ej: Caja de 20 uds, Lata de 400g)"
+              value={detalle}
+              onChange={(e) => setDetalle(e.target.value)}
+              style={{ width: '100%' }}
+            />
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <input 
               type="number" 
@@ -205,9 +266,19 @@ const InventarioPage = () => {
               <option value="pesos">Pesos</option>
             </select>
           </div>
-          <button type="submit" style={{ padding: '1rem', borderRadius: '8px', background: '#10b981', color: 'white', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
-            Guardar Producto
+          <button type="submit" style={{ padding: '1rem', borderRadius: '8px', background: editingId ? '#3b82f6' : '#10b981', color: 'white', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
+            {editingId ? 'Actualizar Producto' : 'Guardar Producto'}
           </button>
+          {editingId && (
+            <button type="button" onClick={() => {
+                setEditingId(null);
+                setProducto(categoriasBase[0]);
+                setDetalle(catalogoProductos[categoriasBase[0]]?.[0] || '');
+                setStock('');
+            }} style={{ padding: '1rem', borderRadius: '8px', background: '#ef4444', color: 'white', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
+                Cancelar Edición
+            </button>
+          )}
         </form>
       </div>
       )}
@@ -262,17 +333,20 @@ const InventarioPage = () => {
                     <thead>
                       <tr>
                         <th>ID</th>
+                        <th>Producto</th>
                         <th>Detalle</th>
                         <th>Stock</th>
                         <th>Unidad</th>
                         <th>Estado</th>
+                        {rol === 'ADMIN' && <th>Acciones</th>}
                       </tr>
                     </thead>
                     <tbody>
                       {items.map((i) => (
                         <tr key={i.id}>
                           <td>{i.id}</td>
-                          <td style={{ fontWeight: '500' }}>{i.detalle || '—'}</td>
+                          <td style={{ fontWeight: '500' }}>{i.producto || '—'}</td>
+                          <td style={{ color: 'var(--text-secondary)' }}>{i.detalle || '—'}</td>
                           <td>
                             <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>{i.stock}</span>
                             {i.unidadMedida && <span style={{ color: 'var(--text-secondary)', marginLeft: '0.3rem' }}>{i.unidadMedida}</span>}
@@ -287,6 +361,12 @@ const InventarioPage = () => {
                               <span className="badge badge-alimento">En Stock</span>
                             )}
                           </td>
+                          {rol === 'ADMIN' && (
+                            <td>
+                              <button onClick={() => handleEditInit(i)} style={{ padding: '0.3rem 0.5rem', marginRight: '0.5rem', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Editar</button>
+                              <button onClick={() => handleDelete(i.id)} style={{ padding: '0.3rem 0.5rem', background: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Eliminar</button>
+                            </td>
+                          )}
                         </tr>
                       ))}
                     </tbody>

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.donaton.logistica.config.RabbitMQConfig;
 import com.donaton.logistica.dto.LogisticaEvent;
+import com.donaton.logistica.dto.LogisticaEstadoEvent;
 import com.donaton.logistica.model.Logistica;
 import com.donaton.logistica.repository.LogisticaRepository;
 
@@ -45,8 +46,15 @@ public class LogisticaService {
         logistica.setEstado(estado);
         Logistica guardada = repository.save(logistica);
 
+        if (guardada.getNecesidadId() != null) {
+            LogisticaEstadoEvent estadoEvent = new LogisticaEstadoEvent(guardada.getNecesidadId(), estado);
+            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY_ESTADO, estadoEvent);
+            System.out.println(">> Evento enviado: envio.estado para Necesidad " + guardada.getNecesidadId() + " -> " + estado);
+        }
+
         if ("ENTREGADO".equalsIgnoreCase(estado)) {
             LogisticaEvent evento = new LogisticaEvent(
+                    guardada.getCategoria(),
                     guardada.getProducto(),
                     guardada.getCantidad(),
                     guardada.getDetalle());
@@ -67,6 +75,7 @@ public class LogisticaService {
 
         // Actualizar campos directamente en la entidad existente
         anterior.setDestino(datos.getDestino());
+        anterior.setCategoria(datos.getCategoria());
         anterior.setProducto(datos.getProducto());
         anterior.setCantidad(datos.getCantidad());
         anterior.setDetalle(datos.getDetalle());
@@ -79,13 +88,13 @@ public class LogisticaService {
             if (diferencia > 0) {
                 // Aumentó la cantidad entregada → descontar más del inventario
                 LogisticaEvent evento = new LogisticaEvent(
-                        guardada.getProducto(), diferencia, guardada.getDetalle());
+                        guardada.getCategoria(), guardada.getProducto(), diferencia, guardada.getDetalle());
                 rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY, evento);
                 System.out.println(">> Ajuste post-entrega: descontado " + diferencia + " más de " + guardada.getDetalle());
             } else if (diferencia < 0) {
                 // Disminuyó la cantidad entregada → devolver stock
                 LogisticaEvent evento = new LogisticaEvent(
-                        guardada.getProducto(), Math.abs(diferencia), guardada.getDetalle());
+                        guardada.getCategoria(), guardada.getProducto(), Math.abs(diferencia), guardada.getDetalle());
                 rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY_REVERTIDO, evento);
                 System.out.println(">> Ajuste post-entrega: devuelto " + Math.abs(diferencia) + " de " + guardada.getDetalle());
             }
@@ -102,6 +111,7 @@ public class LogisticaService {
         // Si estaba ENTREGADO, devolver todo el stock al inventario
         if ("ENTREGADO".equalsIgnoreCase(logistica.getEstado())) {
             LogisticaEvent evento = new LogisticaEvent(
+                    logistica.getCategoria(),
                     logistica.getProducto(),
                     logistica.getCantidad(),
                     logistica.getDetalle());

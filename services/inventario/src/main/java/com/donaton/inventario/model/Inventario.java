@@ -17,6 +17,7 @@ public class Inventario {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private String categoria;
     private String producto;
     private Double stock;
     private String detalle;

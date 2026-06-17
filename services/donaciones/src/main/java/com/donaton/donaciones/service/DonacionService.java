@@ -24,10 +24,10 @@ public class DonacionService {
     @Autowired
     private RabbitTemplate rabbitTemplate;
 
-    public DonacionDetalle crearDonacion(String nombreDonante, String tipoDonacion, Double cantidad, String detalle) {
+    public DonacionDetalle crearDonacion(String nombreDonante, String categoria, String producto, Double cantidad, String detalle) {
         // Buscar si ya existe una donación del mismo donante, tipo y detalle
         java.util.Optional<DonacionDetalle> existente = repository
-                .findByNombreDonanteAndTipoDonacionAndDetalle(nombreDonante, tipoDonacion, detalle);
+                .findByNombreDonanteAndCategoriaAndProductoAndDetalle(nombreDonante, categoria, producto, detalle);
 
         DonacionDetalle guardada;
         double cantidadParaInventario;
@@ -40,14 +40,15 @@ public class DonacionService {
             guardada = repository.save(donacionExistente);
         } else {
             // Si no existe, crear nueva
-            DonacionDetalle donacion = factory.crearDonacion(nombreDonante, tipoDonacion, cantidad, detalle);
+            DonacionDetalle donacion = factory.crearDonacion(nombreDonante, categoria, producto, cantidad, detalle);
             guardada = repository.save(donacion);
             cantidadParaInventario = cantidad;
         }
 
         // Publicar evento a RabbitMQ para que inventario se actualice (solo la cantidad nueva)
         DonacionEvent evento = new DonacionEvent(
-                guardada.getTipoDonacion(),
+                guardada.getCategoria(),
+                guardada.getProducto(),
                 cantidadParaInventario,
                 guardada.getDetalle(),
                 guardada.getUnidadMedida());
@@ -64,8 +65,8 @@ public class DonacionService {
         return repository.findByDetalleContaining(detalle);
     }
 
-    public List<DonacionDetalle> buscarPorTipoDonacion(String tipoDonacion) {
-        return repository.findByTipoDonacion(tipoDonacion);
+    public List<DonacionDetalle> buscarPorTipoDonacion(String categoria) {
+        return repository.findByCategoria(categoria);
     }
 
     public DonacionDetalle obtenerPorId(Long id) {
@@ -79,7 +80,8 @@ public class DonacionService {
 
         if (anterior != null) {
             DonacionEvent revertir = new DonacionEvent(
-                    anterior.getTipoDonacion(),
+                    anterior.getCategoria(),
+                    anterior.getProducto(),
                     anterior.getCantidad(),
                     anterior.getDetalle(),
                     anterior.getUnidadMedida());
@@ -97,7 +99,8 @@ public class DonacionService {
 
         // 3. Actualizar los campos directamente en la entidad existente
         anterior.setNombreDonante(d.getNombreDonante());
-        anterior.setTipoDonacion(d.getTipoDonacion());
+        anterior.setCategoria(d.getCategoria());
+        anterior.setProducto(d.getProducto());
         anterior.setCantidad(d.getCantidad());
         anterior.setDetalle(d.getDetalle());
         DonacionDetalle guardada = repository.save(anterior);
@@ -108,7 +111,8 @@ public class DonacionService {
         if (diferencia > 0) {
             // La cantidad aumentó → sumar la diferencia al inventario
             DonacionEvent evento = new DonacionEvent(
-                    guardada.getTipoDonacion(),
+                    guardada.getCategoria(),
+                    guardada.getProducto(),
                     diferencia,
                     guardada.getDetalle(),
                     guardada.getUnidadMedida());
@@ -116,7 +120,8 @@ public class DonacionService {
         } else if (diferencia < 0) {
             // La cantidad disminuyó → descontar la diferencia del inventario
             DonacionEvent evento = new DonacionEvent(
-                    guardada.getTipoDonacion(),
+                    guardada.getCategoria(),
+                    guardada.getProducto(),
                     Math.abs(diferencia),
                     guardada.getDetalle(),
                     guardada.getUnidadMedida());

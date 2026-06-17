@@ -11,7 +11,7 @@ public class NecesidadEvent {
 
     private Long id;
     private String titulo;
-    private Integer cantidadRequerida;
+    private Double cantidadRequerida;
     private String ubicacion;
     private String estado;
 }

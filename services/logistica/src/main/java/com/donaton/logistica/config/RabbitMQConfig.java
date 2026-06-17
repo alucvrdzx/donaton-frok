@@ -18,6 +18,8 @@ public class RabbitMQConfig {
     public static final String REVERT_QUEUE = "inventario.logistica.revert.queue";
     public static final String ROUTING_KEY_REVERTIDO = "envio.revertido";
 
+    public static final String ROUTING_KEY_ESTADO = "envio.estado";
+
     @Bean
     public TopicExchange exchange() {
         return new TopicExchange(EXCHANGE);

@@ -16,11 +16,17 @@ public class NecesidadRequest {
 
     @NotNull(message = "La cantidad requerida es obligatoria")
     @Min(value = 1, message = "La cantidad requerida debe ser al menos 1")
-    private Integer cantidadRequerida;
+    private Double cantidadRequerida;
 
     @NotBlank(message = "La categoría es obligatoria")
     private String categoria;
 
+    @NotBlank(message = "El producto es obligatorio")
+    private String producto;
+
     @NotBlank(message = "La ubicación es obligatoria")
     private String ubicacion;
+
+    private Double lat;
+    private Double lng;
 }

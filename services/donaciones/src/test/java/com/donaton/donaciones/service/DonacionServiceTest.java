@@ -40,20 +40,23 @@ class DonacionServiceTest {
         DonacionDetalle donacion = new DonacionDetalle();
 
         donacion.setNombreDonante("Juan");
-        donacion.setTipoDonacion("ROPA");
+        donacion.setCategoria("ROPA");
+        donacion.setProducto("Polera");
         donacion.setCantidad(10.0);
         donacion.setDetalle("Polera");
         donacion.setUnidadMedida("unidades");
 
-        when(repository.findByNombreDonanteAndTipoDonacionAndDetalle(
+        when(repository.findByNombreDonanteAndCategoriaAndProductoAndDetalle(
                 "Juan",
                 "ROPA",
+                "Polera",
                 "Polera"))
             .thenReturn(Optional.empty());
 
         when(factory.crearDonacion(
                 "Juan",
                 "ROPA",
+                "Polera",
                 10.0,
                 "Polera"))
             .thenReturn(donacion);
@@ -64,6 +67,7 @@ class DonacionServiceTest {
         DonacionDetalle resultado = service.crearDonacion(
                 "Juan",
                 "ROPA",
+                "Polera",
                 10.0,
                 "Polera");
 
@@ -83,14 +87,16 @@ class DonacionServiceTest {
         DonacionDetalle existente = new DonacionDetalle();
 
         existente.setNombreDonante("Juan");
-        existente.setTipoDonacion("ROPA");
+        existente.setCategoria("ROPA");
+        existente.setProducto("Polera");
         existente.setCantidad(10.0);
         existente.setDetalle("Polera");
         existente.setUnidadMedida("unidades");
 
-        when(repository.findByNombreDonanteAndTipoDonacionAndDetalle(
+        when(repository.findByNombreDonanteAndCategoriaAndProductoAndDetalle(
                 "Juan",
                 "ROPA",
+                "Polera",
                 "Polera"))
             .thenReturn(Optional.of(existente));
 
@@ -100,6 +106,7 @@ class DonacionServiceTest {
         DonacionDetalle resultado = service.crearDonacion(
                 "Juan",
                 "ROPA",
+                "Polera",
                 5.0,
                 "Polera");
 
@@ -118,7 +125,8 @@ class DonacionServiceTest {
         DonacionDetalle donacion = new DonacionDetalle();
 
         donacion.setId(1L);
-        donacion.setTipoDonacion("ROPA");
+        donacion.setCategoria("ROPA");
+        donacion.setProducto("Polera");
         donacion.setCantidad(10.0);
         donacion.setDetalle("Polera");
         donacion.setUnidadMedida("unidades");
@@ -141,7 +149,8 @@ class DonacionServiceTest {
 
         anterior.setId(1L);
         anterior.setNombreDonante("Juan");
-        anterior.setTipoDonacion("ROPA");
+        anterior.setCategoria("ROPA");
+        anterior.setProducto("Polera");
         anterior.setCantidad(10.0);
         anterior.setDetalle("Polera");
         anterior.setUnidadMedida("unidades");
@@ -149,7 +158,8 @@ class DonacionServiceTest {
         DonacionDetalle actualizada = new DonacionDetalle();
 
         actualizada.setNombreDonante("Juan");
-        actualizada.setTipoDonacion("ROPA");
+        actualizada.setCategoria("ROPA");
+        actualizada.setProducto("Polera");
         actualizada.setCantidad(15.0);
         actualizada.setDetalle("Polera");
 
@@ -177,7 +187,8 @@ class DonacionServiceTest {
 
         anterior.setId(1L);
         anterior.setNombreDonante("Juan");
-        anterior.setTipoDonacion("ROPA");
+        anterior.setCategoria("ROPA");
+        anterior.setProducto("Polera");
         anterior.setCantidad(15.0);
         anterior.setDetalle("Polera");
         anterior.setUnidadMedida("unidades");
@@ -185,7 +196,8 @@ class DonacionServiceTest {
         DonacionDetalle actualizada = new DonacionDetalle();
 
         actualizada.setNombreDonante("Juan");
-        actualizada.setTipoDonacion("ROPA");
+        actualizada.setCategoria("ROPA");
+        actualizada.setProducto("Polera");
         actualizada.setCantidad(10.0);
         actualizada.setDetalle("Polera");
 
@@ -213,7 +225,8 @@ class DonacionServiceTest {
 
         anterior.setId(1L);
         anterior.setNombreDonante("Juan");
-        anterior.setTipoDonacion("ROPA");
+        anterior.setCategoria("ROPA");
+        anterior.setProducto("Polera");
         anterior.setCantidad(10.0);
         anterior.setDetalle("Polera");
         anterior.setUnidadMedida("unidades");
@@ -221,7 +234,8 @@ class DonacionServiceTest {
         DonacionDetalle actualizada = new DonacionDetalle();
 
         actualizada.setNombreDonante("Juan");
-        actualizada.setTipoDonacion("ROPA");
+        actualizada.setCategoria("ROPA");
+        actualizada.setProducto("Polera");
         actualizada.setCantidad(10.0);
         actualizada.setDetalle("Polera");
 

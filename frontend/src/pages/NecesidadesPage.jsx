@@ -1,6 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 import catalogoProductos from '../data/catalogoProductos';
+
+// Fix for default marker icons in React Leaflet
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 const NecesidadesPage = () => {
   const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
@@ -14,7 +25,57 @@ const NecesidadesPage = () => {
   const [descripcion, setDescripcion] = useState('');
   const [cantidadRequerida, setCantidadRequerida] = useState('');
   const [categoria, setCategoria] = useState(Object.keys(catalogoProductos)[0]);
+  const [producto, setProducto] = useState(catalogoProductos[Object.keys(catalogoProductos)[0]][0]);
   const [ubicacion, setUbicacion] = useState('');
+  const [lat, setLat] = useState(null);
+  const [lng, setLng] = useState(null);
+  const [geocoding, setGeocoding] = useState(false);
+
+  // Componente auxiliar para cambiar el centro del mapa
+  const ChangeView = ({ center }) => {
+    const map = useMap();
+    if (center && center[0] && center[1]) {
+      map.setView(center, map.getZoom());
+    }
+    return null;
+  };
+
+  // Componente auxiliar para manejar clics en el mapa
+  const LocationMarker = () => {
+    useMapEvents({
+      click(e) {
+        setLat(e.latlng.lat);
+        setLng(e.latlng.lng);
+      },
+    });
+
+    return lat && lng ? (
+      <Marker position={[lat, lng]}>
+        <Popup>Ubicación exacta de la necesidad</Popup>
+      </Marker>
+    ) : null;
+  };
+
+  const handleGeocode = async () => {
+    if (!ubicacion.trim()) {
+      alert("Ingresa una dirección primero.");
+      return;
+    }
+    setGeocoding(true);
+    try {
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(ubicacion)}`);
+      const data = await response.json();
+      if (data && data.length > 0) {
+        setLat(parseFloat(data[0].lat));
+        setLng(parseFloat(data[0].lon));
+      } else {
+        alert("No se encontró la dirección. Intenta ser más específico o haz clic manualmente en el mapa.");
+      }
+    } catch (error) {
+      alert("Error buscando la dirección.");
+    }
+    setGeocoding(false);
+  };
 
   const fetchNecesidades = async () => {
     setLoading(true);
@@ -41,9 +102,12 @@ const NecesidadesPage = () => {
     const necesidadData = {
       titulo,
       descripcion,
-      cantidadRequerida: parseInt(cantidadRequerida),
+      cantidadRequerida: parseFloat(cantidadRequerida),
       categoria,
-      ubicacion
+      producto,
+      ubicacion,
+      lat,
+      lng
     };
 
     try {
@@ -80,7 +144,10 @@ const NecesidadesPage = () => {
     setDescripcion('');
     setCantidadRequerida('');
     setCategoria(Object.keys(catalogoProductos)[0]);
+    setProducto(catalogoProductos[Object.keys(catalogoProductos)[0]][0]);
     setUbicacion('');
+    setLat(null);
+    setLng(null);
   };
 
   const cambiarEstado = async (id, nuevoEstado) => {
@@ -197,13 +264,25 @@ const NecesidadesPage = () => {
             }}
           />
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
             <select
               value={categoria}
-              onChange={(e) => setCategoria(e.target.value)}
+              onChange={(e) => {
+                setCategoria(e.target.value);
+                setProducto(catalogoProductos[e.target.value]?.[0] || '');
+              }}
             >
               {Object.keys(catalogoProductos).map(cat => (
                 <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+            <select
+              value={producto}
+              onChange={(e) => setProducto(e.target.value)}
+              required
+            >
+              {(catalogoProductos[categoria] || []).map(prod => (
+                <option key={prod} value={prod}>{prod}</option>
               ))}
             </select>
 
@@ -217,13 +296,51 @@ const NecesidadesPage = () => {
             />
           </div>
 
-          <input
-            type="text"
-            placeholder="Ubicación (ej: Gimnasio Municipal, Sector 4)"
-            required
-            value={ubicacion}
-            onChange={(e) => setUbicacion(e.target.value)}
-          />
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <input
+              type="text"
+              placeholder="Ubicación (ej: Gimnasio Municipal, Sector 4)"
+              required
+              value={ubicacion}
+              onChange={(e) => setUbicacion(e.target.value)}
+              style={{ flex: 1 }}
+            />
+            <button
+              type="button"
+              onClick={handleGeocode}
+              disabled={geocoding}
+              style={{
+                padding: '0.8rem 1.5rem',
+                borderRadius: '8px',
+                background: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                fontWeight: 'bold',
+                cursor: geocoding ? 'not-allowed' : 'pointer',
+                opacity: geocoding ? 0.7 : 1
+              }}
+            >
+              {geocoding ? 'Buscando...' : '🔍 Validar Dirección'}
+            </button>
+          </div>
+
+          <div style={{ width: '100%', height: '250px', borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <MapContainer 
+              center={lat && lng ? [lat, lng] : [-33.4489, -70.6693]} 
+              zoom={lat && lng ? 15 : 10} 
+              style={{ height: '100%', width: '100%' }}
+            >
+              <TileLayer
+                attribution='&copy; OpenStreetMap'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              <ChangeView center={lat && lng ? [lat, lng] : null} />
+              <LocationMarker />
+            </MapContainer>
+          </div>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '-0.5rem' }}>
+            * Usa "Validar Dirección" o haz clic directamente en el mapa para ajustar la ubicación exacta. {(!lat || !lng) && <span style={{ color: '#ef4444' }}>(Falta fijar punto)</span>}
+          </p>
 
           <button
             type="submit"
@@ -275,6 +392,7 @@ const NecesidadesPage = () => {
                 <th>ID</th>
                 <th>Título</th>
                 <th>Categoría</th>
+                <th>Producto</th>
                 <th>Progreso</th>
                 <th>Estado</th>
                 <th>Ubicación</th>
@@ -298,6 +416,7 @@ const NecesidadesPage = () => {
                       {n.categoria}
                     </span>
                   </td>
+                  <td>{n.producto}</td>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <div style={{

@@ -16,11 +16,12 @@ public class InventarioEventConsumer {
     // Escucha donaciones → suma al stock
     @RabbitListener(queues = "inventario.donacion.queue")
     public void procesarDonacion(DonacionEvent evento) {
-        System.out.println(">> Donacion recibida: " + evento.getTipoDonacion()
+        System.out.println(">> Donacion recibida: " + evento.getCategoria() + " - " + evento.getProducto()
                 + " | " + evento.getDetalle()
                 + " x " + evento.getCantidad() + " " + evento.getUnidadMedida());
         inventarioService.agregarStock(
-                evento.getTipoDonacion(),
+                evento.getCategoria(),
+                evento.getProducto(),
                 evento.getDetalle(),
                 evento.getCantidad(),
                 evento.getUnidadMedida());
@@ -29,10 +30,11 @@ public class InventarioEventConsumer {
     // Escucha logistica → descuenta del stock cuando se entrega
     @RabbitListener(queues = "inventario.logistica.queue")
     public void procesarEntrega(LogisticaEvent evento) {
-        System.out.println(">> Entrega recibida: " + evento.getProducto()
+        System.out.println(">> Entrega recibida: " + evento.getCategoria() + " - " + evento.getProducto()
                 + " | " + evento.getDetalle()
                 + " x " + evento.getCantidad());
         inventarioService.descontarStock(
+                evento.getCategoria(),
                 evento.getProducto(),
                 evento.getDetalle(),
                 evento.getCantidad());
@@ -41,11 +43,12 @@ public class InventarioEventConsumer {
     // Escucha reversiones de donaciones → descuenta del stock cuando se edita/elimina
     @RabbitListener(queues = "inventario.donacion.revert.queue")
     public void procesarReversion(DonacionEvent evento) {
-        System.out.println(">> Reversion recibida: " + evento.getTipoDonacion()
+        System.out.println(">> Reversion recibida: " + evento.getCategoria() + " - " + evento.getProducto()
                 + " | " + evento.getDetalle()
                 + " x " + evento.getCantidad() + " " + evento.getUnidadMedida());
         inventarioService.descontarStock(
-                evento.getTipoDonacion(),
+                evento.getCategoria(),
+                evento.getProducto(),
                 evento.getDetalle(),
                 evento.getCantidad());
     }
@@ -56,6 +59,7 @@ public class InventarioEventConsumer {
         System.out.println(">> Reversion logística: devuelto " + evento.getCantidad()
                 + " de " + evento.getDetalle() + " al inventario");
         inventarioService.agregarStock(
+                evento.getCategoria(),
                 evento.getProducto(),
                 evento.getDetalle(),
                 evento.getCantidad(),

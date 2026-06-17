@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import catalogoProductos from '../data/catalogoProductos';
+import SkeletonLoader from '../components/SkeletonLoader';
+import MapaLogistica from '../components/MapaLogistica';
 
 const LogisticaPage = () => {
   const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
@@ -7,15 +10,20 @@ const LogisticaPage = () => {
 
   const [logistica, setLogistica] = useState([]);
   const [inventario, setInventario] = useState([]);
+  const [necesidades, setNecesidades] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingInv, setLoadingInv] = useState(true);
   const [editandoId, setEditandoId] = useState(null);
 
   const [destino, setDestino] = useState('');
   const [estado, setEstado] = useState('PENDIENTE');
-  const [producto, setProducto] = useState(Object.keys(catalogoProductos)[0]);
+  const [categoria, setCategoria] = useState(Object.keys(catalogoProductos)[0]);
+  const [producto, setProducto] = useState(catalogoProductos[Object.keys(catalogoProductos)[0]][0]);
   const [cantidad, setCantidad] = useState('');
-  const [detalle, setDetalle] = useState(catalogoProductos[Object.keys(catalogoProductos)[0]][0]);
+  const [detalle, setDetalle] = useState('');
+  const [necesidadId, setNecesidadId] = useState('');
+  const [lat, setLat] = useState(null);
+  const [lng, setLng] = useState(null);
 
   const fetchLogistica = async () => {
     setLoading(true);
@@ -41,13 +49,27 @@ const LogisticaPage = () => {
     setLoadingInv(false);
   };
 
+  const fetchNecesidades = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:3001/api/necesidades', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      const data = await response.json();
+      setNecesidades(Array.isArray(data) ? data.filter(n => n.estado !== 'CUBIERTA') : []);
+    } catch (error) {
+      console.error("Error al cargar necesidades:", error);
+    }
+  };
+
   useEffect(() => {
     fetchLogistica();
     fetchInventario();
+    fetchNecesidades();
   }, []);
 
   const getStockDisponible = () => {
-    const item = inventario.find(i => i.producto === producto && i.detalle === detalle);
+    const item = inventario.find(i => i.categoria === categoria && i.producto === producto && i.detalle === detalle);
     return item ? item.stock : 0;
   };
 
@@ -72,9 +94,13 @@ const LogisticaPage = () => {
     const envioData = {
       destino,
       estado: editandoId ? undefined : estado, // No cambiar estado al editar
+      categoria,
       producto,
       cantidad: cantidadNum,
-      detalle
+      detalle,
+      necesidadId: necesidadId ? parseInt(necesidadId) : null,
+      lat,
+      lng
     };
 
     try {
@@ -105,9 +131,13 @@ const LogisticaPage = () => {
   const editarEnvio = (envio) => {
     setEditandoId(envio.id);
     setDestino(envio.destino || '');
-    setProducto(envio.producto || Object.keys(catalogoProductos)[0]);
+    setCategoria(envio.categoria || Object.keys(catalogoProductos)[0]);
+    setProducto(envio.producto || '');
     setCantidad(envio.cantidad?.toString() || '');
     setDetalle(envio.detalle || '');
+    setNecesidadId(envio.necesidadId || '');
+    setLat(envio.lat || null);
+    setLng(envio.lng || null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -115,9 +145,13 @@ const LogisticaPage = () => {
     setEditandoId(null);
     setDestino('');
     setEstado('PENDIENTE');
-    setProducto(Object.keys(catalogoProductos)[0]);
+    setCategoria(Object.keys(catalogoProductos)[0]);
+    setProducto(catalogoProductos[Object.keys(catalogoProductos)[0]][0]);
     setCantidad('');
-    setDetalle(catalogoProductos[Object.keys(catalogoProductos)[0]][0]);
+    setDetalle('');
+    setNecesidadId('');
+    setLat(null);
+    setLng(null);
   };
 
   const eliminarEnvio = async (envio) => {
@@ -155,8 +189,26 @@ const LogisticaPage = () => {
   };
 
   const autocompletarDesdeInventario = (item) => {
-    setProducto(item.producto || Object.keys(catalogoProductos)[0]);
+    setCategoria(item.categoria || Object.keys(catalogoProductos)[0]);
+    setProducto(item.producto || '');
     setDetalle(item.detalle || '');
+  };
+
+  const handleNecesidadSelect = (e) => {
+    const id = e.target.value;
+    setNecesidadId(id);
+    if (id) {
+      const nec = necesidades.find(n => n.id === parseInt(id));
+      if (nec) {
+        setDestino(nec.ubicacion || '');
+        setCategoria(nec.categoria || Object.keys(catalogoProductos)[0]);
+        setProducto(nec.producto || '');
+        const faltante = (nec.cantidadRequerida || 0) - (nec.cantidadCubierta || 0);
+        setCantidad(faltante > 0 ? faltante.toString() : '');
+        setLat(nec.lat || null);
+        setLng(nec.lng || null);
+      }
+    }
   };
 
   const stockActual = getStockDisponible();
@@ -170,6 +222,16 @@ const LogisticaPage = () => {
         </p>
       </header>
 
+      {/* Mapa de Rutas Logísticas */}
+      <div className="stat-card no-hover" style={{ marginBottom: '2rem', padding: '1.5rem', marginTop: '3rem' }}>
+        <h3 style={{ marginTop: 0 }}>Rutas Activas (Mapa en Tiempo Real)</h3>
+        {loading ? (
+           <SkeletonLoader count={1} type="card" />
+        ) : (
+           <MapaLogistica envios={logistica} />
+        )}
+      </div>
+
       {rol !== 'USER' && rol !== 'GUEST' && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '3rem' }}>
 
@@ -182,6 +244,22 @@ const LogisticaPage = () => {
             Selecciona un item del inventario o elige del catálogo.
           </p>
           <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
+            <select
+              value={necesidadId}
+              onChange={handleNecesidadSelect}
+              style={{
+                border: '1px solid #3b82f6',
+                background: 'rgba(59, 130, 246, 0.1)',
+                color: '#fff'
+              }}
+            >
+              <option value="">-- Asociar a una Necesidad (Opcional) --</option>
+              {necesidades.map(n => (
+                <option key={n.id} value={n.id}>
+                  #{n.id} - {n.titulo} ({n.producto})
+                </option>
+              ))}
+            </select>
             <input
               type="text"
               placeholder="Destino (ej: Refugio Norte)"
@@ -191,10 +269,10 @@ const LogisticaPage = () => {
             />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <select
-                value={producto}
+                value={categoria}
                 onChange={(e) => {
-                  setProducto(e.target.value);
-                  setDetalle(catalogoProductos[e.target.value]?.[0] || '');
+                  setCategoria(e.target.value);
+                  setProducto(catalogoProductos[e.target.value]?.[0] || '');
                 }}
               >
                 {Object.keys(catalogoProductos).map(cat => (
@@ -202,15 +280,22 @@ const LogisticaPage = () => {
                 ))}
               </select>
               <select
-                value={detalle}
-                onChange={(e) => setDetalle(e.target.value)}
+                value={producto}
+                onChange={(e) => setProducto(e.target.value)}
                 required
               >
-                {(catalogoProductos[producto] || []).map(prod => (
+                {(catalogoProductos[categoria] || []).map(prod => (
                   <option key={prod} value={prod}>{prod}</option>
                 ))}
               </select>
             </div>
+            <input
+              type="text"
+              placeholder="Detalle o Formato"
+              required
+              value={detalle}
+              onChange={(e) => setDetalle(e.target.value)}
+            />
 
             {/* Indicador de stock disponible */}
             <div style={{
@@ -330,13 +415,13 @@ const LogisticaPage = () => {
                     >
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
-                          <span className={`badge badge-${(item.producto || '').toLowerCase()}`} style={{ fontSize: '0.7rem' }}>
-                            {item.producto}
+                          <span className={`badge badge-${(item.categoria || '').toLowerCase()}`} style={{ fontSize: '0.7rem' }}>
+                            {item.categoria}
                           </span>
-                          <strong style={{ color: 'var(--text-primary)' }}>{item.detalle || 'Sin detalle'}</strong>
+                          <strong style={{ color: 'var(--text-primary)' }}>{item.producto}</strong>
                         </div>
                         <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                          Click para seleccionar
+                          {item.detalle || 'Sin detalle'} (Click para seleccionar)
                         </span>
                       </div>
                       <div style={{ textAlign: 'right' }}>
@@ -362,6 +447,7 @@ const LogisticaPage = () => {
               <tr>
                 <th>Nº Envío</th>
                 <th>Destino</th>
+                <th>Categoría</th>
                 <th>Producto</th>
                 <th>Cantidad</th>
                 <th>Detalle</th>
@@ -375,10 +461,11 @@ const LogisticaPage = () => {
                   <td>#{l.id}</td>
                   <td style={{ fontWeight: '500' }}>{l.destino}</td>
                   <td>
-                    <span className={`badge badge-${(l.producto || '').toLowerCase()}`}>
-                      {l.producto || '—'}
+                    <span className={`badge badge-${(l.categoria || '').toLowerCase()}`}>
+                      {l.categoria || '—'}
                     </span>
                   </td>
+                  <td>{l.producto || '—'}</td>
                   <td>{l.cantidad || '—'}</td>
                   <td>{l.detalle || '—'}</td>
                   <td>
