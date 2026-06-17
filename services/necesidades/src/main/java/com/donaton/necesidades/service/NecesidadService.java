@@ -7,6 +7,9 @@ import com.donaton.necesidades.exception.ResourceNotFoundException;
 import com.donaton.necesidades.model.EstadoNecesidad;
 import com.donaton.necesidades.model.Necesidad;
 import com.donaton.necesidades.repository.NecesidadRepository;
+import com.donaton.necesidades.model.OutboxEvent;
+import com.donaton.necesidades.repository.OutboxEventRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -24,7 +27,9 @@ public class NecesidadService {
     private NecesidadRepository necesidadRepository;
 
     @Autowired
-    private RabbitTemplate rabbitTemplate;
+    private OutboxEventRepository outboxEventRepository;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Transactional
     public Necesidad crearNecesidad(NecesidadRequest request) {
@@ -32,10 +37,13 @@ public class NecesidadService {
         necesidad.setTitulo(request.getTitulo());
         necesidad.setDescripcion(request.getDescripcion());
         necesidad.setCantidadRequerida(request.getCantidadRequerida());
-        necesidad.setCantidadCubierta(0);
+        necesidad.setCantidadCubierta(0.0);
         necesidad.setEstado(EstadoNecesidad.PENDIENTE);
         necesidad.setCategoria(request.getCategoria());
+        necesidad.setProducto(request.getProducto());
         necesidad.setUbicacion(request.getUbicacion());
+        necesidad.setLat(request.getLat());
+        necesidad.setLng(request.getLng());
 
         Necesidad guardada = necesidadRepository.save(necesidad);
         log.info("Necesidad guardada en base de datos con ID: {}", guardada.getId());
@@ -44,26 +52,26 @@ public class NecesidadService {
         return guardada;
     }
 
-    @CircuitBreaker(name = "rabbitMQPub", fallbackMethod = "fallbackPublicarEvento")
     public void publicarEventoRabbit(Necesidad necesidad) {
-        NecesidadEvent event = new NecesidadEvent(
-                necesidad.getId(),
-                necesidad.getTitulo(),
-                necesidad.getCantidadRequerida(),
-                necesidad.getUbicacion(),
-                necesidad.getEstado().name()
-        );
-        rabbitTemplate.convertAndSend(
-                RabbitMQConfig.EXCHANGE,
-                RabbitMQConfig.ROUTING_KEY,
-                event
-        );
-        log.info("Evento publicado en RabbitMQ para la necesidad ID: {}", necesidad.getId());
-    }
-
-    public void fallbackPublicarEvento(Necesidad necesidad, Throwable t) {
-        log.error("Fallo al publicar evento en RabbitMQ para necesidad ID: {}. Causa: {}",
-                necesidad.getId(), t.getMessage());
+        try {
+            NecesidadEvent event = new NecesidadEvent(
+                    necesidad.getId(),
+                    necesidad.getTitulo(),
+                    necesidad.getCantidadRequerida(),
+                    necesidad.getUbicacion(),
+                    necesidad.getEstado().name()
+            );
+            
+            OutboxEvent outboxEvent = new OutboxEvent();
+            outboxEvent.setExchange(RabbitMQConfig.EXCHANGE);
+            outboxEvent.setRoutingKey(RabbitMQConfig.ROUTING_KEY);
+            outboxEvent.setPayload(objectMapper.writeValueAsString(event));
+            
+            outboxEventRepository.save(outboxEvent);
+            log.info("Evento guardado en Outbox para la necesidad ID: {}", necesidad.getId());
+        } catch (Exception e) {
+            log.error("Error al serializar el evento para Outbox", e);
+        }
     }
 
     @Transactional(readOnly = true)
@@ -88,5 +96,38 @@ public class NecesidadService {
     public void eliminar(Long id) {
         Necesidad necesidad = obtenerPorId(id);
         necesidadRepository.delete(necesidad);
+    }
+
+    @org.springframework.amqp.rabbit.annotation.RabbitListener(queues = RabbitMQConfig.DONACION_QUEUE)
+    @Transactional
+    public void procesarMatchDonacion(com.donaton.necesidades.dto.DonacionEvent donacionEvent) {
+        log.info("Procesando posible match para donacion de categoria: {} - producto: {}", donacionEvent.getCategoria(), donacionEvent.getProducto());
+        
+        List<EstadoNecesidad> estados = java.util.Arrays.asList(EstadoNecesidad.PENDIENTE, EstadoNecesidad.EN_PROCESO);
+        List<Necesidad> necesidades = necesidadRepository.findByCategoriaIgnoreCaseAndProductoIgnoreCaseAndEstadoInOrderByCreadoEnAsc(donacionEvent.getCategoria(), donacionEvent.getProducto(), estados);
+        
+        double cantidadDisponible = donacionEvent.getCantidad();
+        
+        for (Necesidad necesidad : necesidades) {
+            if (cantidadDisponible <= 0) break;
+            
+            double cantidadFaltante = necesidad.getCantidadRequerida() - necesidad.getCantidadCubierta();
+            
+            if (cantidadFaltante > 0) {
+                double cantidadAAsignar = Math.min(cantidadDisponible, cantidadFaltante);
+                
+                necesidad.setCantidadCubierta(necesidad.getCantidadCubierta() + cantidadAAsignar);
+                cantidadDisponible -= cantidadAAsignar;
+                
+                if (necesidad.getCantidadCubierta() >= necesidad.getCantidadRequerida()) {
+                    necesidad.setEstado(EstadoNecesidad.CUBIERTA);
+                } else {
+                    necesidad.setEstado(EstadoNecesidad.EN_PROCESO);
+                }
+                
+                necesidadRepository.save(necesidad);
+                log.info("Match realizado! Asignados {} a la necesidad ID: {}", cantidadAAsignar, necesidad.getId());
+            }
+        }
     }
 }

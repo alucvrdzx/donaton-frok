@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class LogisticaEvent {
 
+    private String categoria;
     private String producto;
     private Double cantidad;
     private String detalle;

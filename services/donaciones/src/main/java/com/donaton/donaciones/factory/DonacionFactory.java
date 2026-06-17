@@ -9,17 +9,18 @@ import com.donaton.donaciones.model.DonacionDetalle;
 @Component
 public class DonacionFactory {
 
-    public DonacionDetalle crearDonacion(String nombreDonante, String tipoDonacion, Double cantidad, String detalle) {
+    public DonacionDetalle crearDonacion(String nombreDonante, String categoria, String producto, Double cantidad, String detalle) {
 
         DonacionDetalle donacion = new DonacionDetalle();
         donacion.setNombreDonante(nombreDonante);
         donacion.setFechaDonacion(LocalDateTime.now());
-        donacion.setTipoDonacion(tipoDonacion.toUpperCase());
+        donacion.setCategoria(categoria.toUpperCase());
+        donacion.setProducto(producto);
         donacion.setCantidad(cantidad);
         donacion.setDetalle(detalle);
 
         // El factory decide la unidad de medida segun el tipo
-        switch (tipoDonacion.toUpperCase()) {
+        switch (categoria.toUpperCase()) {
             case "ROPA":
                 donacion.setUnidadMedida("unidades");
                 break;

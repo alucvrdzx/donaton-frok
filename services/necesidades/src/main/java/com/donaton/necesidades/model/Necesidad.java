@@ -25,10 +25,10 @@ public class Necesidad {
     private String descripcion;
 
     @Column(nullable = false)
-    private Integer cantidadRequerida;
+    private Double cantidadRequerida;
 
     @Column(nullable = false)
-    private Integer cantidadCubierta;
+    private Double cantidadCubierta;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -38,7 +38,13 @@ public class Necesidad {
     private String categoria;
 
     @Column(nullable = false)
+    private String producto;
+
+    @Column(nullable = false)
     private String ubicacion;
+
+    private Double lat;
+    private Double lng;
 
     @Column(name = "creado_en", nullable = false, updatable = false)
     private LocalDateTime creadoEn;
@@ -47,7 +53,7 @@ public class Necesidad {
     protected void onCreate() {
         this.creadoEn = LocalDateTime.now();
         if (this.cantidadCubierta == null) {
-            this.cantidadCubierta = 0;
+            this.cantidadCubierta = 0.0;
         }
         if (this.estado == null) {
             this.estado = EstadoNecesidad.PENDIENTE;

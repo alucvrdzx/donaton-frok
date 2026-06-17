@@ -15,6 +15,9 @@ public class RabbitMQConfig {
     public static final String QUEUE = "necesidad.creada.queue";
     public static final String ROUTING_KEY = "necesidad.creada";
 
+    public static final String DONACION_QUEUE = "necesidades.donacion.queue";
+    public static final String DONACION_ROUTING_KEY = "donacion.creada";
+
     @Bean
     public TopicExchange exchange() {
         return new TopicExchange(EXCHANGE);
@@ -28,6 +31,29 @@ public class RabbitMQConfig {
     @Bean
     public Binding binding(Queue queue, TopicExchange exchange) {
         return BindingBuilder.bind(queue).to(exchange).with(ROUTING_KEY);
+    }
+
+    @Bean
+    public Queue donacionQueue() {
+        return new Queue(DONACION_QUEUE, true);
+    }
+
+    @Bean
+    public Binding donacionBinding(Queue donacionQueue, TopicExchange exchange) {
+        return BindingBuilder.bind(donacionQueue).to(exchange).with(DONACION_ROUTING_KEY);
+    }
+
+    public static final String LOGISTICA_ESTADO_QUEUE = "necesidades.logistica.estado.queue";
+    public static final String LOGISTICA_ESTADO_ROUTING_KEY = "envio.estado";
+
+    @Bean
+    public Queue logisticaEstadoQueue() {
+        return new Queue(LOGISTICA_ESTADO_QUEUE, true);
+    }
+
+    @Bean
+    public Binding logisticaEstadoBinding(Queue logisticaEstadoQueue, TopicExchange exchange) {
+        return BindingBuilder.bind(logisticaEstadoQueue).to(exchange).with(LOGISTICA_ESTADO_ROUTING_KEY);
     }
 
     @Bean

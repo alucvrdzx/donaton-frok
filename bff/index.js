@@ -322,6 +322,24 @@ app.post('/api/inventario', async (req, res) => {
     }
 });
 
+app.put('/api/inventario/:id', async (req, res) => {
+    try {
+        const response = await axios.put(`${GATEWAY_URL}/inventario/${req.params.id}`, req.body, { headers: getAuthHeaders(req) });
+        res.json(response.data);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al actualizar inventario' });
+    }
+});
+
+app.delete('/api/inventario/:id', async (req, res) => {
+    try {
+        await axios.delete(`${GATEWAY_URL}/inventario/${req.params.id}`, { headers: getAuthHeaders(req) });
+        res.status(204).send();
+    } catch (error) {
+        res.status(500).json({ error: 'Error al eliminar inventario' });
+    }
+});
+
 // ==========================================
 // 🚚 LOGÍSTICA
 // ==========================================

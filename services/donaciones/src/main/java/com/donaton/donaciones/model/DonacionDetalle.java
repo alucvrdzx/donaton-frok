@@ -8,9 +8,9 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class DonacionDetalle extends Donacion {
+    private String categoria;
 
-    private String tipoDonacion;
-
+    private String producto;
     private Double cantidad;
 
     private String unidadMedida;

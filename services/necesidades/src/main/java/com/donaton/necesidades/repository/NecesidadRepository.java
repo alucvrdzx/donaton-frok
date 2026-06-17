@@ -13,4 +13,6 @@ public interface NecesidadRepository extends JpaRepository<Necesidad, Long> {
     List<Necesidad> findByEstado(EstadoNecesidad estado);
 
     List<Necesidad> findByCategoria(String categoria);
+
+    List<Necesidad> findByCategoriaIgnoreCaseAndProductoIgnoreCaseAndEstadoInOrderByCreadoEnAsc(String categoria, String producto, List<EstadoNecesidad> estados);
 }

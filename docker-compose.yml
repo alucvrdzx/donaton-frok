@@ -68,7 +68,7 @@ services:
     build: ./services/inventario
     container_name: inventario
     ports:
-      - "8082:8082"
+      - "8086:8082"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres_inventario:5432/inventario
       SPRING_DATASOURCE_USERNAME: postgres
@@ -170,6 +170,14 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - microservicios-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis_cache
+    ports:
+      - "6379:6379"
     networks:
       - microservicios-net
 
