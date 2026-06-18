@@ -2,8 +2,6 @@ package com.humanitarian.authservice.security;
 
 import com.humanitarian.authservice.model.Usuario;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;

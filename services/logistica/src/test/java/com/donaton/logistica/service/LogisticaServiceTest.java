@@ -37,10 +37,14 @@ void debeActualizarEstadoAEntregadoYEnviarEvento() {
     Logistica envio = new Logistica(
             1L,
             "Hogar de Cristo",
+            null,
+            null,
+            1L,
             "PENDIENTE",
             "ROPA",
+            "Polera",
             10.0,
-            "Polera");
+            null);
 
     when(repository.findById(1L))
             .thenReturn(Optional.of(envio));
@@ -69,10 +73,14 @@ void debeNoEnviarEventoSiYaEstabaEntregado() {
     Logistica envio = new Logistica(
             1L,
             "Hogar de Cristo",
+            null,
+            null,
+            1L,
             "ENTREGADO",
             "ROPA",
+            "Polera",
             10.0,
-            "Polera");
+            null);
 
     when(repository.findById(1L))
             .thenReturn(Optional.of(envio));
@@ -99,10 +107,14 @@ void debeEliminarEnvioEntregadoYDevolverStock() {
     Logistica envio = new Logistica(
             1L,
             "Hogar de Cristo",
+            null,
+            null,
+            1L,
             "ENTREGADO",
             "ROPA",
+            "Polera",
             10.0,
-            "Polera");
+            null);
 
     when(repository.findById(1L))
             .thenReturn(Optional.of(envio));
@@ -122,18 +134,26 @@ void debeDescontarMasStockCuandoAumentaCantidadDeEnvioEntregado() {
     Logistica anterior = new Logistica(
             1L,
             "Hogar de Cristo",
+            null,
+            null,
+            1L,
             "ENTREGADO",
             "ROPA",
+            "Polera",
             10.0,
-            "Polera");
+            null);
 
     Logistica nuevosDatos = new Logistica(
             null,
             "Hogar de Cristo",
+            null,
+            null,
+            1L,
             "ENTREGADO",
             "ROPA",
+            "Polera",
             15.0,
-            "Polera");
+            null);
 
     when(repository.findById(1L))
             .thenReturn(Optional.of(anterior));
@@ -154,18 +174,26 @@ void debeDevolverStockCuandoDisminuyeCantidadDeEnvioEntregado() {
     Logistica anterior = new Logistica(
             1L,
             "Hogar de Cristo",
+            null,
+            null,
+            1L,
             "ENTREGADO",
             "ROPA",
+            "Polera",
             15.0,
-            "Polera");
+            null);
 
     Logistica nuevosDatos = new Logistica(
             null,
             "Hogar de Cristo",
+            null,
+            null,
+            1L,
             "ENTREGADO",
             "ROPA",
+            "Polera",
             10.0,
-            "Polera");
+            null);
 
     when(repository.findById(1L))
             .thenReturn(Optional.of(anterior));

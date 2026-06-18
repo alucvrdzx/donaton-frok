@@ -23,6 +23,7 @@ class InventarioEventConsumerTest {
 
         DonacionEvent evento = new DonacionEvent(
                 "ROPA",
+                "Polera",
                 10.0,
                 "Polera",
                 "unidades");
@@ -31,6 +32,7 @@ class InventarioEventConsumerTest {
 
         verify(inventarioService).agregarStock(
                 "ROPA",
+                "Polera",
                 "Polera",
                 10.0,
                 "unidades");

@@ -31,6 +31,7 @@ void debeSumarStockCuandoProductoYaExiste() {
     Inventario existente = new Inventario(
             1L,
             "ROPA",
+            "Polera",
             10.0,
             "Polera",
             "unidades");
@@ -38,12 +39,14 @@ void debeSumarStockCuandoProductoYaExiste() {
     Inventario nuevaEntrada = new Inventario(
             null,
             "ROPA",
+            "Polera",
             5.0,
             "Polera",
             "unidades");
 
-    when(repository.findByProductoAndDetalle(
+    when(repository.findByCategoriaAndProductoAndDetalle(
             "ROPA",
+            "Polera",
             "Polera"))
             .thenReturn(Optional.of(existente));
 
@@ -65,17 +68,20 @@ void debeImpedirStockNegativo() {
     Inventario inventario = new Inventario(
             1L,
             "ROPA",
+            "Polera",
             5.0,
             "Polera",
             "unidades");
 
-    when(repository.findByProductoAndDetalle(
+    when(repository.findByCategoriaAndProductoAndDetalle(
             "ROPA",
+            "Polera",
             "Polera"))
             .thenReturn(Optional.of(inventario));
 
     service.descontarStock(
             "ROPA",
+            "Polera",
             "Polera",
             10.0);
 
@@ -87,13 +93,15 @@ void debeImpedirStockNegativo() {
 @Test
 void debeCrearProductoNuevoCuandoNoExisteEnInventario() {
 
-    when(repository.findByProductoAndDetalle(
+    when(repository.findByCategoriaAndProductoAndDetalle(
             "ALIMENTO",
+            "Arroz",
             "Arroz"))
             .thenReturn(Optional.empty());
 
     service.agregarStock(
             "ALIMENTO",
+            "Arroz",
             "Arroz",
             20.0,
             "kilos");

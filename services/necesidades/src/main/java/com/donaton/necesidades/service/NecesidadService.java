@@ -10,10 +10,7 @@ import com.donaton.necesidades.repository.NecesidadRepository;
 import com.donaton.necesidades.model.OutboxEvent;
 import com.donaton.necesidades.repository.OutboxEventRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,11 +20,13 @@ import java.util.List;
 @Service
 public class NecesidadService {
 
-    @Autowired
-    private NecesidadRepository necesidadRepository;
+    private final NecesidadRepository necesidadRepository;
+    private final OutboxEventRepository outboxEventRepository;
 
-    @Autowired
-    private OutboxEventRepository outboxEventRepository;
+    public NecesidadService(NecesidadRepository necesidadRepository, OutboxEventRepository outboxEventRepository) {
+        this.necesidadRepository = necesidadRepository;
+        this.outboxEventRepository = outboxEventRepository;
+    }
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 

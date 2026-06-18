@@ -10,6 +10,7 @@ com\donaton\necesidades\service\OutboxScheduler.class
 com\donaton\necesidades\repository\NecesidadRepository.class
 com\donaton\necesidades\exception\GlobalExceptionHandler.class
 com\donaton\necesidades\model\EstadoNecesidad.class
+com\donaton\necesidades\dto\LogisticaEstadoEvent.class
 com\donaton\necesidades\dto\NecesidadRequest.class
 com\donaton\necesidades\exception\ErrorResponse.class
 com\donaton\necesidades\service\NecesidadService.class

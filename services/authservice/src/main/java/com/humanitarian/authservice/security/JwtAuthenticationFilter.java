@@ -15,8 +15,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.security.Key;
-import java.util.Collections;
 import java.util.List;
+import org.springframework.lang.NonNull;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -27,7 +27,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final Key SECRET_KEY = Keys.hmacShaKeyFor(SECRET_STRING.getBytes());
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
             throws ServletException, IOException {
         
         String authHeader = request.getHeader("Authorization");
@@ -56,8 +56,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 );
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
-        } catch (Exception e) {
-            // Token inválido, simplemente seguimos (Spring Security bloqueará si la ruta lo requiere)
+        } catch (io.jsonwebtoken.JwtException e) {
+            // Token inválido o expirado, simplemente seguimos (Spring Security bloqueará si la ruta lo requiere)
         }
 
         filterChain.doFilter(request, response);
