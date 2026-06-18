@@ -6,9 +6,14 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import com.donaton.logistica.config.RabbitMQConfig;
 import com.donaton.logistica.dto.LogisticaEvent;
 import com.donaton.logistica.dto.LogisticaEstadoEvent;
+import com.donaton.logistica.dto.LogisticaRequest;
+import com.donaton.logistica.dto.LogisticaResponse;
 import com.donaton.logistica.exception.ResourceNotFoundException;
 import com.donaton.logistica.model.EstadoLogistica;
 import com.donaton.logistica.model.Logistica;
@@ -26,33 +31,44 @@ public class LogisticaService {
     private final RabbitTemplate rabbitTemplate;
 
     @Transactional
-    public Logistica crear(Logistica l) {
-        if (l.getEstado() == null) {
-            l.setEstado(EstadoLogistica.PENDIENTE);
-        }
-        return repository.save(l);
+    public LogisticaResponse crear(LogisticaRequest request) {
+        Logistica l = new Logistica();
+        l.setDestino(request.destino());
+        l.setLat(request.lat());
+        l.setLng(request.lng());
+        l.setNecesidadId(request.necesidadId());
+        l.setEstado(request.estado() != null ? request.estado() : EstadoLogistica.PENDIENTE);
+        l.setCategoria(request.categoria());
+        l.setProducto(request.producto());
+        l.setCantidad(request.cantidad());
+        l.setDetalle(request.detalle());
+        return toResponse(repository.save(l));
     }
 
     @Transactional(readOnly = true)
-    public List<Logistica> listar() {
-        return repository.findAll();
+    public Page<LogisticaResponse> listar(Pageable pageable) {
+        return repository.findAll(pageable).map(this::toResponse);
     }
 
     @Transactional(readOnly = true)
-    public Logistica obtenerPorId(Long id) {
+    public LogisticaResponse obtenerPorIdResponse(Long id) {
+        return toResponse(obtenerPorId(id));
+    }
+
+    protected Logistica obtenerPorId(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Envío no encontrado con ID: " + id));
     }
 
     // Actualiza el estado y si es ENTREGADO publica evento para descontar inventario
     @Transactional
-    public Logistica actualizarEstado(Long id, String estado) {
+    public LogisticaResponse actualizarEstado(Long id, String estado) {
         Logistica logistica = obtenerPorId(id);
         EstadoLogistica nuevoEstado = EstadoLogistica.valueOf(estado.toUpperCase());
 
         // Guard clause: si ya estaba ENTREGADO, no re-enviar evento
         if (logistica.getEstado() == EstadoLogistica.ENTREGADO) {
-            return logistica;
+            return toResponse(logistica);
         }
 
         logistica.setEstado(nuevoEstado);
@@ -74,23 +90,29 @@ public class LogisticaService {
             log.info("Evento enviado: envio.entregado para {} x {}", guardada.getProducto(), guardada.getCantidad());
         }
 
-        return guardada;
+        return toResponse(guardada);
     }
 
     // Editar un envío completo — ajusta stock si ya estaba entregado
     @Transactional
-    public Logistica actualizar(Long id, Logistica datos) {
+    public LogisticaResponse actualizar(Long id, LogisticaRequest datos) {
         Logistica anterior = obtenerPorId(id);
 
         boolean estabaEntregado = anterior.getEstado() == EstadoLogistica.ENTREGADO;
         double cantidadAnterior = anterior.getCantidad();
 
         // Actualizar campos directamente en la entidad existente
-        anterior.setDestino(datos.getDestino());
-        anterior.setCategoria(datos.getCategoria());
-        anterior.setProducto(datos.getProducto());
-        anterior.setCantidad(datos.getCantidad());
-        anterior.setDetalle(datos.getDetalle());
+        anterior.setDestino(datos.destino());
+        anterior.setLat(datos.lat());
+        anterior.setLng(datos.lng());
+        anterior.setNecesidadId(datos.necesidadId());
+        anterior.setCategoria(datos.categoria());
+        anterior.setProducto(datos.producto());
+        anterior.setCantidad(datos.cantidad());
+        anterior.setDetalle(datos.detalle());
+        if (datos.estado() != null) {
+            anterior.setEstado(datos.estado());
+        }
         Logistica guardada = repository.save(anterior);
 
         // Solo ajustar inventario si el envío ya estaba ENTREGADO
@@ -112,7 +134,7 @@ public class LogisticaService {
             }
         }
 
-        return guardada;
+        return toResponse(guardada);
     }
 
     // Eliminar un envío — si estaba ENTREGADO, devuelve todo el stock
@@ -132,5 +154,20 @@ public class LogisticaService {
         }
 
         repository.deleteById(id);
+    }
+
+    private LogisticaResponse toResponse(Logistica l) {
+        return new LogisticaResponse(
+            l.getId(),
+            l.getDestino(),
+            l.getLat(),
+            l.getLng(),
+            l.getNecesidadId(),
+            l.getEstado(),
+            l.getCategoria(),
+            l.getProducto(),
+            l.getCantidad(),
+            l.getDetalle()
+        );
     }
 }

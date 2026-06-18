@@ -3,10 +3,11 @@ import { Outlet, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import AdminSidebar from './components/AdminSidebar';
+import { useAuth } from './context/AuthContext';
 import './index.css';
 
 function App() {
-  const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
+  const { user } = useAuth();
   const rol = user ? user.rol : 'GUEST';
   const location = useLocation();
 

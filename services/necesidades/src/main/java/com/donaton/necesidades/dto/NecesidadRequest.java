@@ -3,30 +3,28 @@ package com.donaton.necesidades.dto;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.Data;
 
-@Data
-public class NecesidadRequest {
-
+public record NecesidadRequest(
     @NotBlank(message = "El título es obligatorio")
-    private String titulo;
+    String titulo,
 
     @NotBlank(message = "La descripción es obligatoria")
-    private String descripcion;
+    String descripcion,
 
     @NotNull(message = "La cantidad requerida es obligatoria")
     @Min(value = 1, message = "La cantidad requerida debe ser al menos 1")
-    private Double cantidadRequerida;
+    Double cantidadRequerida,
 
     @NotBlank(message = "La categoría es obligatoria")
-    private String categoria;
+    String categoria,
 
     @NotBlank(message = "El producto es obligatorio")
-    private String producto;
+    String producto,
 
     @NotBlank(message = "La ubicación es obligatoria")
-    private String ubicacion;
+    String ubicacion,
 
-    private Double lat;
-    private Double lng;
+    Double lat,
+    Double lng
+) {
 }

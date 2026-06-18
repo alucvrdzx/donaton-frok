@@ -5,10 +5,10 @@ const { createProxy, getAuthHeaders } = require('../middleware/proxyFactory');
 const { enviarEmailConfirmacion } = require('../services/emailService');
 
 // Standard CRUD routes via proxy
-router.get('/donaciones',              createProxy('get',    '/donaciones'));
+router.get('/donaciones',              createProxy('get',    '/donaciones', { passQuery: true }));
 router.get('/donaciones/:id',          createProxy('get',    '/donaciones/:id'));
-router.get('/donaciones/tipo/:tipo',   createProxy('get',    '/donaciones/tipo/:tipo'));
-router.get('/donaciones/detalle/:detalle', createProxy('get', '/donaciones/detalle/:detalle'));
+router.get('/donaciones/tipo/:tipo',   createProxy('get',    '/donaciones/tipo/:tipo', { passQuery: true }));
+router.get('/donaciones/detalle/:detalle', createProxy('get', '/donaciones/detalle/:detalle', { passQuery: true }));
 router.put('/donaciones/:id',          createProxy('put',    '/donaciones/:id'));
 router.delete('/donaciones/:id',       createProxy('delete', '/donaciones/:id'));
 

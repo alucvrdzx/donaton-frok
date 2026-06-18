@@ -1,18 +1,18 @@
 package com.donaton.necesidades.controller;
 
 import com.donaton.necesidades.dto.NecesidadRequest;
+import com.donaton.necesidades.dto.NecesidadResponse;
 import com.donaton.necesidades.model.EstadoNecesidad;
-import com.donaton.necesidades.model.Necesidad;
 import com.donaton.necesidades.service.NecesidadService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/necesidades")
@@ -25,25 +25,25 @@ public class NecesidadController {
 
     @Operation(summary = "Crear una nueva necesidad y notificar asincrónicamente")
     @PostMapping
-    public ResponseEntity<Necesidad> crear(@Valid @RequestBody NecesidadRequest request) {
+    public ResponseEntity<NecesidadResponse> crear(@Valid @RequestBody NecesidadRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(necesidadService.crearNecesidad(request));
     }
 
-    @Operation(summary = "Obtener el listado de todas las necesidades")
+    @Operation(summary = "Obtener el listado paginado de todas las necesidades")
     @GetMapping
-    public List<Necesidad> listar() {
-        return necesidadService.listarTodas();
+    public Page<NecesidadResponse> listar(Pageable pageable) {
+        return necesidadService.listarTodas(pageable);
     }
 
     @Operation(summary = "Obtener los detalles de una necesidad específica")
     @GetMapping("/{id}")
-    public Necesidad obtenerPorId(@PathVariable Long id) {
-        return necesidadService.obtenerPorId(id);
+    public NecesidadResponse obtenerPorId(@PathVariable Long id) {
+        return necesidadService.obtenerPorIdResponse(id);
     }
 
     @Operation(summary = "Actualizar el estado de una necesidad")
     @PatchMapping("/{id}/estado")
-    public Necesidad actualizarEstado(@PathVariable Long id, @RequestParam EstadoNecesidad estado) {
+    public NecesidadResponse actualizarEstado(@PathVariable Long id, @RequestParam EstadoNecesidad estado) {
         return necesidadService.actualizarEstado(id, estado);
     }
 

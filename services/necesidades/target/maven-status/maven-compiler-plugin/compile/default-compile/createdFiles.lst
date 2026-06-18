@@ -3,6 +3,7 @@ com\donaton\necesidades\exception\ResourceNotFoundException.class
 com\donaton\necesidades\model\OutboxEvent.class
 com\donaton\necesidades\NecesidadesApplication.class
 com\donaton\necesidades\repository\OutboxEventRepository.class
+com\donaton\necesidades\dto\NecesidadResponse.class
 com\donaton\necesidades\model\Necesidad.class
 com\donaton\necesidades\OpenApiConfig.class
 com\donaton\necesidades\dto\NecesidadEvent.class

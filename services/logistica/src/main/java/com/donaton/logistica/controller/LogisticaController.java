@@ -2,6 +2,8 @@ package com.donaton.logistica.controller;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -14,7 +16,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.donaton.logistica.model.Logistica;
+import jakarta.validation.Valid;
+
+import com.donaton.logistica.dto.LogisticaRequest;
+import com.donaton.logistica.dto.LogisticaResponse;
 import com.donaton.logistica.service.LogisticaService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,31 +37,31 @@ public class LogisticaController {
 
     @Operation(summary = "Crear un nuevo registro logístico")
     @PostMapping
-    public ResponseEntity<Logistica> crear(@RequestBody Logistica l) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.crear(l));
+    public ResponseEntity<LogisticaResponse> crear(@Valid @RequestBody LogisticaRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.crear(request));
     }
 
-    @Operation(summary = "Obtener listado logístico")
+    @Operation(summary = "Obtener listado logístico paginado")
     @GetMapping
-    public List<Logistica> listar() {
-        return service.listar();
+    public Page<LogisticaResponse> listar(Pageable pageable) {
+        return service.listar(pageable);
     }
 
     @Operation(summary = "Obtener envío por ID")
     @GetMapping("/{id}")
-    public Logistica obtenerPorId(@PathVariable Long id) {
-        return service.obtenerPorId(id);
+    public LogisticaResponse obtenerPorId(@PathVariable Long id) {
+        return service.obtenerPorIdResponse(id);
     }
 
     @Operation(summary = "Actualizar estado de un envío (PENDIENTE, EN_TRANSITO, ENTREGADO)")
     @PutMapping("/{id}/estado")
-    public Logistica actualizarEstado(@PathVariable Long id, @RequestBody Map<String, String> body) {
+    public LogisticaResponse actualizarEstado(@PathVariable Long id, @RequestBody Map<String, String> body) {
         return service.actualizarEstado(id, body.get("estado"));
     }
 
     @Operation(summary = "Editar un envío completo")
     @PutMapping("/{id}")
-    public Logistica actualizar(@PathVariable Long id, @RequestBody Logistica datos) {
+    public LogisticaResponse actualizar(@PathVariable Long id, @Valid @RequestBody LogisticaRequest datos) {
         return service.actualizar(id, datos);
     }
 

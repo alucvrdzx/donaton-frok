@@ -2,6 +2,8 @@ package com.donaton.donaciones.controller;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -14,7 +16,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.donaton.donaciones.model.Donacion;
+import jakarta.validation.Valid;
+
+import com.donaton.donaciones.dto.DonacionRequest;
+import com.donaton.donaciones.dto.DonacionResponse;
 import com.donaton.donaciones.service.DonacionService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,39 +37,39 @@ public class DonacionController {
 
     @Operation(summary = "Crear una nueva donación")
     @PostMapping
-    public ResponseEntity<Donacion> crear(@RequestBody Donacion d) {
+    public ResponseEntity<DonacionResponse> crear(@Valid @RequestBody DonacionRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(service.crearDonacion(d.getNombreDonante(), d.getCategoria(), d.getProducto(), d.getCantidad(), d.getDetalle()));
+                .body(service.crearDonacion(request));
     }
 
-    @Operation(summary = "Obtener listado de donaciones")
+    @Operation(summary = "Obtener listado de donaciones paginado")
     @GetMapping
-    public List<Donacion> listar() {
-        return service.listar();
+    public Page<DonacionResponse> listar(Pageable pageable) {
+        return service.listar(pageable);
     }
 
-    @Operation(summary = "Buscar donaciones por detalle")
+    @Operation(summary = "Buscar donaciones por detalle paginado")
     @GetMapping("/detalle/{detalle}")
-    public List<Donacion> buscarPorDetalle(@PathVariable String detalle) {
-        return service.buscarPorDetalle(detalle);
+    public Page<DonacionResponse> buscarPorDetalle(@PathVariable String detalle, Pageable pageable) {
+        return service.buscarPorDetalle(detalle, pageable);
     }
 
-    @Operation(summary = "Buscar donaciones por tipo")
+    @Operation(summary = "Buscar donaciones por tipo paginado")
     @GetMapping("/tipo/{tipo}")
-    public List<Donacion> buscarPorTipo(@PathVariable String tipo) {
-        return service.buscarPorTipoDonacion(tipo);
+    public Page<DonacionResponse> buscarPorTipo(@PathVariable String tipo, Pageable pageable) {
+        return service.buscarPorTipoDonacion(tipo, pageable);
     }
 
     @Operation(summary = "Obtener donación por ID")
     @GetMapping("/{id}")
-    public Donacion obtenerPorId(@PathVariable Long id) {
+    public DonacionResponse obtenerPorId(@PathVariable Long id) {
         return service.obtenerPorId(id);
     }
 
     @Operation(summary = "Actualizar una donación")
     @PutMapping("/{id}")
-    public Donacion actualizar(@PathVariable Long id, @RequestBody Donacion d) {
-        return service.actualizar(id, d);
+    public DonacionResponse actualizar(@PathVariable Long id, @Valid @RequestBody DonacionRequest request) {
+        return service.actualizar(id, request);
     }
 
     @Operation(summary = "Eliminar una donación")

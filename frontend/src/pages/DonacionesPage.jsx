@@ -29,7 +29,8 @@ const DonacionesPage = () => {
     try {
       const response = await fetch('http://localhost:3001/api/donaciones');
       const data = await response.json();
-      setDonaciones(data);
+      const content = data.content || data;
+      setDonaciones(content);
     } catch (error) {
       console.error("Error al cargar donaciones:", error);
     }

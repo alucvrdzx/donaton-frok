@@ -6,8 +6,12 @@ const UsuariosPage = () => {
   const [loading, setLoading] = useState(true);
 
   const fetchUsuarios = async () => {
-    setLoading(true);
     const token = localStorage.getItem('token');
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     try {
       const response = await fetch('http://localhost:3001/api/usuarios', {
         headers: { 'Authorization': `Bearer ${token}` }

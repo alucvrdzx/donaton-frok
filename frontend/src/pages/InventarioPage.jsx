@@ -13,7 +13,7 @@ const InventarioPage = () => {
   // Categorías dinámicas (base + las que ya existen en inventario)
   const categoriasExistentes = [...new Set([
     ...categoriasBase,
-    ...inventario.map(i => (i.producto || '').toUpperCase()).filter(Boolean)
+    ...inventario.map(i => (i.categoria || '').toUpperCase()).filter(Boolean)
   ])].sort();
 
   const [producto, setProducto] = useState(categoriasBase[0]);
@@ -21,6 +21,7 @@ const InventarioPage = () => {
   const [modoNuevaCategoria, setModoNuevaCategoria] = useState(false);
   const [stock, setStock] = useState('');
   const [detalle, setDetalle] = useState(catalogoProductos[categoriasBase[0]]?.[0] || '');
+  const [formatoDetalle, setFormatoDetalle] = useState('');
   const [modoNuevoProducto, setModoNuevoProducto] = useState(false);
   const [productoCustom, setProductoCustom] = useState('');
   const [unidadMedida, setUnidadMedida] = useState('unidades');
@@ -32,7 +33,8 @@ const InventarioPage = () => {
     try {
       const response = await fetch('http://localhost:3001/api/inventario');
       const data = await response.json();
-      setInventario(data);
+      const content = data.content || data;
+      setInventario(content);
     } catch (error) {
       console.error("Error al cargar inventario:", error);
     }
@@ -59,9 +61,10 @@ const InventarioPage = () => {
     }
 
     const nuevoProducto = {
-      producto: productoFinal,
+      categoria: productoFinal,
+      producto: detalleFinal,
       stock: parseFloat(stock),
-      detalle: detalleFinal,
+      detalle: formatoDetalle.trim() || 'Sin especificar',
       unidadMedida
     };
 
@@ -94,6 +97,7 @@ const InventarioPage = () => {
       setModoNuevaCategoria(false);
       setStock('');
       setDetalle(catalogoProductos[categoriasBase[0]]?.[0] || '');
+      setFormatoDetalle('');
       setModoNuevoProducto(false);
       setProductoCustom('');
       setUnidadMedida('unidades');
@@ -109,14 +113,15 @@ const InventarioPage = () => {
     setModoNuevaCategoria(false);
     setModoNuevoProducto(false);
     // Find the actual base category or use the custom one
-    let cat = item.producto || categoriasBase[0];
+    let cat = item.categoria || categoriasBase[0];
     if (!categoriasExistentes.includes(cat)) {
         setModoNuevaCategoria(true);
         setNuevaCategoria(cat);
     } else {
         setProducto(cat);
     }
-    setDetalle(item.detalle || '');
+    setDetalle(item.producto || '');
+    setFormatoDetalle(item.detalle || '');
     setStock(item.stock || 0);
     setUnidadMedida(item.unidadMedida || 'unidades');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -240,8 +245,8 @@ const InventarioPage = () => {
             <input
               type="text"
               placeholder="Detalle o Formato opcional (ej: Caja de 20 uds, Lata de 400g)"
-              value={detalle}
-              onChange={(e) => setDetalle(e.target.value)}
+              value={formatoDetalle}
+              onChange={(e) => setFormatoDetalle(e.target.value)}
               style={{ width: '100%' }}
             />
           </div>
@@ -274,6 +279,7 @@ const InventarioPage = () => {
                 setEditingId(null);
                 setProducto(categoriasBase[0]);
                 setDetalle(catalogoProductos[categoriasBase[0]]?.[0] || '');
+                setFormatoDetalle('');
                 setStock('');
             }} style={{ padding: '1rem', borderRadius: '8px', background: '#ef4444', color: 'white', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
                 Cancelar Edición
@@ -292,7 +298,7 @@ const InventarioPage = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {Object.entries(
             inventario.reduce((grupos, item) => {
-              const cat = item.producto || 'SIN CATEGORÍA';
+              const cat = item.categoria || 'SIN CATEGORÍA';
               if (!grupos[cat]) grupos[cat] = [];
               grupos[cat].push(item);
               return grupos;

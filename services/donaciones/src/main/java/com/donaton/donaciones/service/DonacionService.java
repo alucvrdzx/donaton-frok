@@ -6,8 +6,13 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import com.donaton.donaciones.config.RabbitMQConfig;
 import com.donaton.donaciones.dto.DonacionEvent;
+import com.donaton.donaciones.dto.DonacionRequest;
+import com.donaton.donaciones.dto.DonacionResponse;
 import com.donaton.donaciones.exception.ResourceNotFoundException;
 import com.donaton.donaciones.factory.DonacionFactory;
 import com.donaton.donaciones.model.Donacion;
@@ -24,10 +29,11 @@ public class DonacionService {
     private final RabbitTemplate rabbitTemplate;
 
     @Transactional
-    public Donacion crearDonacion(String nombreDonante, String categoria, String producto, Double cantidad, String detalle) {
+    public DonacionResponse crearDonacion(DonacionRequest request) {
         // Buscar si ya existe una donación del mismo donante, tipo y detalle
         java.util.Optional<Donacion> existente = repository
-                .findByNombreDonanteAndCategoriaAndProductoAndDetalle(nombreDonante, categoria, producto, detalle);
+                .findByNombreDonanteAndCategoriaAndProductoAndDetalle(
+                        request.nombreDonante(), request.categoria(), request.producto(), request.detalle());
 
         Donacion guardada;
         double cantidadParaInventario;
@@ -35,14 +41,14 @@ public class DonacionService {
         if (existente.isPresent()) {
             // Si ya existe, sumar la cantidad
             Donacion donacionExistente = existente.get();
-            cantidadParaInventario = cantidad; // Solo la cantidad nueva va al inventario
-            donacionExistente.setCantidad(donacionExistente.getCantidad() + cantidad);
+            cantidadParaInventario = request.cantidad(); // Solo la cantidad nueva va al inventario
+            donacionExistente.setCantidad(donacionExistente.getCantidad() + request.cantidad());
             guardada = repository.save(donacionExistente);
         } else {
             // Si no existe, crear nueva
-            Donacion donacion = factory.crearDonacion(nombreDonante, categoria, producto, cantidad, detalle);
+            Donacion donacion = factory.crearDonacion(request.nombreDonante(), request.categoria(), request.producto(), request.cantidad(), request.detalle());
             guardada = repository.save(donacion);
-            cantidadParaInventario = cantidad;
+            cantidadParaInventario = request.cantidad();
         }
 
         // Publicar evento a RabbitMQ para que inventario se actualice (solo la cantidad nueva)
@@ -54,34 +60,35 @@ public class DonacionService {
                 guardada.getUnidadMedida());
         rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY, evento);
 
-        return guardada;
+        return toResponse(guardada);
     }
 
     @Transactional(readOnly = true)
-    public List<Donacion> listar() {
-        return repository.findAll();
+    public Page<DonacionResponse> listar(Pageable pageable) {
+        return repository.findAll(pageable).map(this::toResponse);
     }
 
     @Transactional(readOnly = true)
-    public List<Donacion> buscarPorDetalle(String detalle) {
-        return repository.findByDetalleContaining(detalle);
+    public Page<DonacionResponse> buscarPorDetalle(String detalle, Pageable pageable) {
+        return repository.findByDetalleContaining(detalle, pageable).map(this::toResponse);
     }
 
     @Transactional(readOnly = true)
-    public List<Donacion> buscarPorTipoDonacion(String categoria) {
-        return repository.findByCategoria(categoria);
+    public Page<DonacionResponse> buscarPorTipoDonacion(String categoria, Pageable pageable) {
+        return repository.findByCategoria(categoria, pageable).map(this::toResponse);
     }
 
     @Transactional(readOnly = true)
-    public Donacion obtenerPorId(Long id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Donación no encontrada con ID: " + id));
+    public DonacionResponse obtenerPorId(Long id) {
+        return toResponse(repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Donación no encontrada con ID: " + id)));
     }
 
     @Transactional
     public void eliminar(Long id) {
         // Revertir el efecto en inventario antes de borrar
-        Donacion anterior = obtenerPorId(id);
+        Donacion anterior = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Donación no encontrada con ID: " + id));
         repository.deleteById(id);
 
         DonacionEvent revertir = new DonacionEvent(
@@ -94,19 +101,20 @@ public class DonacionService {
     }
 
     @Transactional
-    public Donacion actualizar(Long id, Donacion d) {
+    public DonacionResponse actualizar(Long id, DonacionRequest request) {
         // 1. Obtener la donación anterior
-        Donacion anterior = obtenerPorId(id);
+        Donacion anterior = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Donación no encontrada con ID: " + id));
 
         // 2. Guardar la cantidad vieja ANTES de modificar
         double cantidadAnterior = anterior.getCantidad();
 
         // 3. Actualizar los campos directamente en la entidad existente
-        anterior.setNombreDonante(d.getNombreDonante());
-        anterior.setCategoria(d.getCategoria());
-        anterior.setProducto(d.getProducto());
-        anterior.setCantidad(d.getCantidad());
-        anterior.setDetalle(d.getDetalle());
+        anterior.setNombreDonante(request.nombreDonante());
+        anterior.setCategoria(request.categoria());
+        anterior.setProducto(request.producto());
+        anterior.setCantidad(request.cantidad());
+        anterior.setDetalle(request.detalle());
         Donacion guardada = repository.save(anterior);
 
         // 4. Calcular la diferencia neta y enviar UN SOLO mensaje
@@ -130,6 +138,19 @@ public class DonacionService {
             rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY_REVERTIDA, evento);
         }
 
-        return guardada;
+        return toResponse(guardada);
+    }
+
+    private DonacionResponse toResponse(Donacion donacion) {
+        return new DonacionResponse(
+                donacion.getId(),
+                donacion.getNombreDonante(),
+                donacion.getCategoria(),
+                donacion.getProducto(),
+                donacion.getCantidad(),
+                donacion.getUnidadMedida(),
+                donacion.getDetalle(),
+                donacion.getFechaDonacion()
+        );
     }
 }

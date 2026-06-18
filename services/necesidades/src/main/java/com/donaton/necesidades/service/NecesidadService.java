@@ -4,6 +4,7 @@ import com.donaton.necesidades.config.RabbitMQConfig;
 import com.donaton.necesidades.dto.DonacionEvent;
 import com.donaton.necesidades.dto.NecesidadEvent;
 import com.donaton.necesidades.dto.NecesidadRequest;
+import com.donaton.necesidades.dto.NecesidadResponse;
 import com.donaton.necesidades.exception.ResourceNotFoundException;
 import com.donaton.necesidades.model.EstadoNecesidad;
 import com.donaton.necesidades.model.Necesidad;
@@ -16,6 +17,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -30,24 +34,24 @@ public class NecesidadService {
     private final ObjectMapper objectMapper;
 
     @Transactional
-    public Necesidad crearNecesidad(NecesidadRequest request) {
+    public NecesidadResponse crearNecesidad(NecesidadRequest request) {
         Necesidad necesidad = new Necesidad();
-        necesidad.setTitulo(request.getTitulo());
-        necesidad.setDescripcion(request.getDescripcion());
-        necesidad.setCantidadRequerida(request.getCantidadRequerida());
+        necesidad.setTitulo(request.titulo());
+        necesidad.setDescripcion(request.descripcion());
+        necesidad.setCantidadRequerida(request.cantidadRequerida());
         necesidad.setCantidadCubierta(0.0);
         necesidad.setEstado(EstadoNecesidad.PENDIENTE);
-        necesidad.setCategoria(request.getCategoria());
-        necesidad.setProducto(request.getProducto());
-        necesidad.setUbicacion(request.getUbicacion());
-        necesidad.setLat(request.getLat());
-        necesidad.setLng(request.getLng());
+        necesidad.setCategoria(request.categoria());
+        necesidad.setProducto(request.producto());
+        necesidad.setUbicacion(request.ubicacion());
+        necesidad.setLat(request.lat());
+        necesidad.setLng(request.lng());
 
         Necesidad guardada = necesidadRepository.save(necesidad);
         log.info("Necesidad guardada en base de datos con ID: {}", guardada.getId());
 
         publicarEventoRabbit(guardada);
-        return guardada;
+        return toResponse(guardada);
     }
 
     public void publicarEventoRabbit(Necesidad necesidad) {
@@ -73,21 +77,25 @@ public class NecesidadService {
     }
 
     @Transactional(readOnly = true)
-    public List<Necesidad> listarTodas() {
-        return necesidadRepository.findAll();
+    public Page<NecesidadResponse> listarTodas(Pageable pageable) {
+        return necesidadRepository.findAll(pageable).map(this::toResponse);
     }
 
     @Transactional(readOnly = true)
-    public Necesidad obtenerPorId(Long id) {
+    public NecesidadResponse obtenerPorIdResponse(Long id) {
+        return toResponse(obtenerPorId(id));
+    }
+
+    protected Necesidad obtenerPorId(Long id) {
         return necesidadRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Necesidad no encontrada con el ID: " + id));
     }
 
     @Transactional
-    public Necesidad actualizarEstado(Long id, EstadoNecesidad nuevoEstado) {
+    public NecesidadResponse actualizarEstado(Long id, EstadoNecesidad nuevoEstado) {
         Necesidad necesidad = obtenerPorId(id);
         necesidad.setEstado(nuevoEstado);
-        return necesidadRepository.save(necesidad);
+        return toResponse(necesidadRepository.save(necesidad));
     }
 
     @Transactional
@@ -127,5 +135,22 @@ public class NecesidadService {
                 log.info("Match realizado! Asignados {} a la necesidad ID: {}", cantidadAAsignar, necesidad.getId());
             }
         }
+    }
+
+    private NecesidadResponse toResponse(Necesidad n) {
+        return new NecesidadResponse(
+            n.getId(),
+            n.getTitulo(),
+            n.getDescripcion(),
+            n.getCantidadRequerida(),
+            n.getCantidadCubierta(),
+            n.getEstado(),
+            n.getCategoria(),
+            n.getProducto(),
+            n.getUbicacion(),
+            n.getLat(),
+            n.getLng(),
+            n.getCreadoEn()
+        );
     }
 }

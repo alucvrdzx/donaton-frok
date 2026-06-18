@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const LoginPage = () => {
   // Credenciales hardcodeadas para facilitar la presentación
@@ -8,6 +9,7 @@ const LoginPage = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -36,16 +38,15 @@ const LoginPage = () => {
       
       const decodedToken = JSON.parse(jsonPayload);
 
-      // Guardar token y redirigir
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify({ 
+      // Guardar token y estado
+      login(data.token, { 
         correo: decodedToken.sub, 
         rol: decodedToken.rol,
         nombre: decodedToken.nombre
-      }));
+      });
       
-      // Forzar recarga completa para que el estado de App se actualice
-      window.location.href = '/';
+      // Redirigir al inicio
+      navigate('/');
       
     } catch (err) {
       setError(err.message);

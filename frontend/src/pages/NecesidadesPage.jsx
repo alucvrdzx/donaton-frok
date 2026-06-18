@@ -85,7 +85,8 @@ const NecesidadesPage = () => {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
       const data = await response.json();
-      setNecesidades(Array.isArray(data) ? data : []);
+      const content = data.content || data;
+      setNecesidades(Array.isArray(content) ? content : []);
     } catch (error) {
       console.error("Error al cargar necesidades:", error);
     }

@@ -30,7 +30,8 @@ const LogisticaPage = () => {
     try {
       const response = await fetch('http://localhost:3001/api/logistica');
       const data = await response.json();
-      setLogistica(data);
+      const content = data.content || data;
+      setLogistica(content);
     } catch (error) {
       console.error("Error al cargar logística:", error);
     }
@@ -42,7 +43,8 @@ const LogisticaPage = () => {
     try {
       const response = await fetch('http://localhost:3001/api/inventario');
       const data = await response.json();
-      setInventario(Array.isArray(data) ? data.filter(item => item.stock > 0) : []);
+      const content = data.content || data;
+      setInventario(Array.isArray(content) ? content.filter(item => item.stock > 0) : []);
     } catch (error) {
       console.error("Error al cargar inventario:", error);
     }
@@ -56,7 +58,8 @@ const LogisticaPage = () => {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
       const data = await response.json();
-      setNecesidades(Array.isArray(data) ? data.filter(n => n.estado !== 'CUBIERTA') : []);
+      const content = data.content || data;
+      setNecesidades(Array.isArray(content) ? content.filter(n => n.estado !== 'CUBIERTA') : []);
     } catch (error) {
       console.error("Error al cargar necesidades:", error);
     }
@@ -99,8 +102,8 @@ const LogisticaPage = () => {
       cantidad: cantidadNum,
       detalle,
       necesidadId: necesidadId ? parseInt(necesidadId) : null,
-      lat,
-      lng
+      lat: lat !== null && lat !== undefined ? lat : (-33.4489 + (Math.random() - 0.5) * 0.05),
+      lng: lng !== null && lng !== undefined ? lng : (-70.6693 + (Math.random() - 0.5) * 0.05)
     };
 
     try {

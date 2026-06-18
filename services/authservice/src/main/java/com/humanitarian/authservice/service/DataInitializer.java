@@ -16,8 +16,8 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        // Si no hay usuarios, creamos el administrador inicial
-        if (usuarioRepository.count() == 0) {
+        // Si no existe el administrador inicial, lo creamos
+        if (!usuarioRepository.existsByCorreo("admin@administrador.cl")) {
             Usuario admin = Usuario.builder()
                     .nombre("Administrador Inicial")
                     .correo("admin@administrador.cl")

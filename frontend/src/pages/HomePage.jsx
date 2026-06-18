@@ -19,10 +19,15 @@ const HomePage = () => {
           fetch('http://localhost:3001/api/necesidades').catch(() => ({ ok: false }))
         ]);
 
-        const donaciones = resDonaciones.ok ? await resDonaciones.json() : [];
-        const inventario = resInventario.ok ? await resInventario.json() : [];
-        const logistica = resLogistica.ok ? await resLogistica.json() : [];
-        const necesidades = resNecesidades.ok ? await resNecesidades.json() : [];
+        const rawDonaciones = resDonaciones.ok ? await resDonaciones.json() : [];
+        const rawInventario = resInventario.ok ? await resInventario.json() : [];
+        const rawLogistica = resLogistica.ok ? await resLogistica.json() : [];
+        const rawNecesidades = resNecesidades.ok ? await resNecesidades.json() : [];
+
+        const donaciones = rawDonaciones.content || rawDonaciones;
+        const inventario = rawInventario.content || rawInventario;
+        const logistica = rawLogistica.content || rawLogistica;
+        const necesidades = rawNecesidades.content || rawNecesidades;
 
         setStats({ donaciones, inventario, logistica, necesidades });
         setLoading(false);

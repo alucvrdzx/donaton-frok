@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const { createProxy } = require('../middleware/proxyFactory');
 
-router.get('/logistica',              createProxy('get',    '/logistica'));
+router.get('/logistica',              createProxy('get',    '/logistica', { passQuery: true }));
 router.post('/logistica',             createProxy('post',   '/logistica', { statusCode: 201 }));
 router.get('/logistica/:id',          createProxy('get',    '/logistica/:id'));
 router.put('/logistica/:id/estado',   createProxy('put',    '/logistica/:id/estado'));

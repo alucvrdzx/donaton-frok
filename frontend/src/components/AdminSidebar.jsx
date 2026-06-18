@@ -1,14 +1,15 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import './AdminSidebar.css';
 
 const AdminSidebar = ({ rol }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    logout();
     navigate('/login');
   };
 

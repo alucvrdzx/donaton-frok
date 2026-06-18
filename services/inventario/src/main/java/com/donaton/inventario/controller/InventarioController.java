@@ -2,6 +2,8 @@ package com.donaton.inventario.controller;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -14,7 +16,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.donaton.inventario.model.Inventario;
+import jakarta.validation.Valid;
+
+import com.donaton.inventario.dto.InventarioRequest;
+import com.donaton.inventario.dto.InventarioResponse;
 import com.donaton.inventario.service.InventarioService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,20 +37,20 @@ public class InventarioController {
 
     @Operation(summary = "Crear un nuevo registro de inventario")
     @PostMapping
-    public ResponseEntity<Inventario> crear(@RequestBody Inventario i) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.crear(i));
+    public ResponseEntity<InventarioResponse> crear(@Valid @RequestBody InventarioRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.crear(request));
     }
 
     @Operation(summary = "Obtener listado del inventario")
     @GetMapping
-    public List<Inventario> listar() {
-        return service.listar();
+    public Page<InventarioResponse> listar(Pageable pageable) {
+        return service.listar(pageable);
     }
 
     @Operation(summary = "Actualizar un registro del inventario")
     @PutMapping("/{id}")
-    public Inventario actualizar(@PathVariable Long id, @RequestBody Inventario i) {
-        return service.actualizar(id, i);
+    public InventarioResponse actualizar(@PathVariable Long id, @Valid @RequestBody InventarioRequest request) {
+        return service.actualizar(id, request);
     }
 
     @Operation(summary = "Eliminar un registro del inventario")
