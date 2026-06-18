@@ -54,6 +54,11 @@ const AdminSidebar = ({ rol }) => {
               <span className="nav-icon">🚚</span> Logística
             </Link>
           </li>
+          <li>
+            <Link to="/necesidades" className={isActive('/necesidades')}>
+              <span className="nav-icon">🆘</span> Necesidades
+            </Link>
+          </li>
           {rol === 'ADMIN' && (
             <li>
               <Link to="/usuarios" className={isActive('/usuarios')}>

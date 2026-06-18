@@ -19,11 +19,14 @@ public class Logistica {
     private Long id;
 
     private String destino;
+    private Double lat;
+    private Double lng;
+    private Long necesidadId;
 
     private String estado;
+    private String categoria;
 
     private String producto;
-
     private Double cantidad;
 
     private String detalle;

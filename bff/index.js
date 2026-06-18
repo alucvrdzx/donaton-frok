@@ -322,6 +322,24 @@ app.post('/api/inventario', async (req, res) => {
     }
 });
 
+app.put('/api/inventario/:id', async (req, res) => {
+    try {
+        const response = await axios.put(`${GATEWAY_URL}/inventario/${req.params.id}`, req.body, { headers: getAuthHeaders(req) });
+        res.json(response.data);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al actualizar inventario' });
+    }
+});
+
+app.delete('/api/inventario/:id', async (req, res) => {
+    try {
+        await axios.delete(`${GATEWAY_URL}/inventario/${req.params.id}`, { headers: getAuthHeaders(req) });
+        res.status(204).send();
+    } catch (error) {
+        res.status(500).json({ error: 'Error al eliminar inventario' });
+    }
+});
+
 // ==========================================
 // 🚚 LOGÍSTICA
 // ==========================================
@@ -377,6 +395,58 @@ app.delete('/api/logistica/:id', async (req, res) => {
         res.status(204).send();
     } catch (error) {
         res.status(500).json({ error: 'Error al eliminar el envío' });
+    }
+});
+
+// ==========================================
+// 🆘 NECESIDADES
+// ==========================================
+
+app.get('/api/necesidades', async (req, res) => {
+    try {
+        const response = await axios.get(`${GATEWAY_URL}/necesidades`, { headers: getAuthHeaders(req) });
+        res.json(response.data);
+    } catch (error) {
+        res.status(error.response?.status || 500).json(error.response?.data || { error: 'Error conectando con el backend de necesidades' });
+    }
+});
+
+app.post('/api/necesidades', async (req, res) => {
+    try {
+        const response = await axios.post(`${GATEWAY_URL}/necesidades`, req.body, { headers: getAuthHeaders(req) });
+        res.status(201).json(response.data);
+    } catch (error) {
+        res.status(error.response?.status || 500).json(error.response?.data || { error: 'Error conectando con el backend de necesidades' });
+    }
+});
+
+app.get('/api/necesidades/:id', async (req, res) => {
+    try {
+        const response = await axios.get(`${GATEWAY_URL}/necesidades/${req.params.id}`, { headers: getAuthHeaders(req) });
+        res.json(response.data);
+    } catch (error) {
+        res.status(error.response?.status || 500).json(error.response?.data || { error: 'Error al obtener la necesidad' });
+    }
+});
+
+app.patch('/api/necesidades/:id/estado', async (req, res) => {
+    try {
+        const response = await axios.patch(`${GATEWAY_URL}/necesidades/${req.params.id}/estado`, null, {
+            params: req.query,
+            headers: getAuthHeaders(req)
+        });
+        res.json(response.data);
+    } catch (error) {
+        res.status(error.response?.status || 500).json(error.response?.data || { error: 'Error al actualizar estado de la necesidad' });
+    }
+});
+
+app.delete('/api/necesidades/:id', async (req, res) => {
+    try {
+        await axios.delete(`${GATEWAY_URL}/necesidades/${req.params.id}`, { headers: getAuthHeaders(req) });
+        res.status(204).send();
+    } catch (error) {
+        res.status(error.response?.status || 500).json(error.response?.data || { error: 'Error al eliminar la necesidad' });
     }
 });
 

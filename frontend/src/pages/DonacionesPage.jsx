@@ -13,9 +13,10 @@ const DonacionesPage = () => {
   // Estados para el formulario
   const [nombreDonante, setNombreDonante] = useState(user?.nombre || '');
   const [emailDonante, setEmailDonante] = useState(user?.email || '');
-  const [tipoDonacion, setTipoDonacion] = useState('ROPA');
+  const [categoria, setCategoria] = useState('ROPA');
+  const [producto, setProducto] = useState(catalogoProductos['ROPA'][0]);
   const [cantidad, setCantidad] = useState('');
-  const [detalle, setDetalle] = useState(catalogoProductos['ROPA'][0]);
+  const [detalle, setDetalle] = useState('');
   const [modoNuevoProducto, setModoNuevoProducto] = useState(false);
   const [productoCustom, setProductoCustom] = useState('');
 
@@ -56,8 +57,8 @@ const DonacionesPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    const detalleFinal = modoNuevoProducto ? productoCustom.trim() : detalle;
-    if (!detalleFinal) {
+    const productoFinal = modoNuevoProducto ? productoCustom.trim() : producto;
+    if (!productoFinal) {
       mostrarToast('error', 'Debes seleccionar o crear un producto.');
       return;
     }
@@ -67,9 +68,10 @@ const DonacionesPage = () => {
     const donacionData = {
       nombreDonante,
       emailDonante,
-      tipoDonacion,
+      categoria,
+      producto: productoFinal,
       cantidad: parseFloat(cantidad),
-      detalle: detalleFinal
+      detalle: detalle.trim()
     };
 
     try {
@@ -112,18 +114,19 @@ const DonacionesPage = () => {
   const cargarParaEditar = (donacion) => {
     setEditandoId(donacion.id);
     setNombreDonante(donacion.nombreDonante);
-    setTipoDonacion(donacion.tipoDonacion);
+    setCategoria(donacion.categoria);
     setCantidad(donacion.cantidad);
+    setDetalle(donacion.detalle);
     
-    // Verificar si el detalle existe en el catálogo
-    const productosCategoria = catalogoProductos[donacion.tipoDonacion] || [];
-    if (productosCategoria.includes(donacion.detalle)) {
-      setDetalle(donacion.detalle);
+    // Verificar si el producto existe en el catálogo
+    const productosCategoria = catalogoProductos[donacion.categoria] || [];
+    if (productosCategoria.includes(donacion.producto)) {
+      setProducto(donacion.producto);
       setModoNuevoProducto(false);
     } else {
       // Producto custom: activar modo texto
       setModoNuevoProducto(true);
-      setProductoCustom(donacion.detalle);
+      setProductoCustom(donacion.producto);
     }
   };
 
@@ -132,8 +135,9 @@ const DonacionesPage = () => {
     setNombreDonante(user?.nombre || '');
     setEmailDonante(user?.email || '');
     setCantidad('');
-    setDetalle(catalogoProductos[tipoDonacion]?.[0] || '');
-    setTipoDonacion('ROPA');
+    setProducto(catalogoProductos[categoria]?.[0] || '');
+    setDetalle('');
+    setCategoria('ROPA');
     setModoNuevoProducto(false);
     setProductoCustom('');
   };
@@ -288,10 +292,10 @@ const DonacionesPage = () => {
           </div>
 
           <select 
-            value={tipoDonacion}
+            value={categoria}
             onChange={(e) => {
-              setTipoDonacion(e.target.value);
-              setDetalle(catalogoProductos[e.target.value]?.[0] || '');
+              setCategoria(e.target.value);
+              setProducto(catalogoProductos[e.target.value]?.[0] || '');
               setModoNuevoProducto(false);
             }}
           >
@@ -314,12 +318,12 @@ const DonacionesPage = () => {
               />
             ) : (
               <select
-                value={detalle}
-                onChange={(e) => setDetalle(e.target.value)}
+                value={producto}
+                onChange={(e) => setProducto(e.target.value)}
                 required
                 style={{ flex: 1 }}
               >
-                {(catalogoProductos[tipoDonacion] || []).map(prod => (
+                {(catalogoProductos[categoria] || []).map(prod => (
                   <option key={prod} value={prod}>{prod}</option>
                 ))}
               </select>
@@ -352,6 +356,14 @@ const DonacionesPage = () => {
             required 
             value={cantidad}
             onChange={(e) => setCantidad(e.target.value)}
+          />
+          
+          <input 
+            type="text" 
+            placeholder="Detalle o Formato (ej: Cajas de 1 Litro, Talla M)" 
+            required 
+            value={detalle}
+            onChange={(e) => setDetalle(e.target.value)}
           />
 
           <div style={{ display: 'flex', gap: '1rem' }}>
@@ -411,27 +423,29 @@ const DonacionesPage = () => {
         <div className="data-table-container">
           <table className="data-table">
             <thead>
-              <tr>
-                <th>ID</th>
-                <th>Donante</th>
-                <th>Tipo</th>
-                <th>Cantidad</th>
-                <th>Detalle</th>
-                {rol !== 'USER' && rol !== 'GUEST' && <th>Acciones</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {donaciones.map((d) => (
-                <tr key={d.id}>
-                  <td>{d.id}</td>
-                  <td style={{ fontWeight: '500' }}>{d.nombreDonante}</td>
-                  <td>
-                    <span className={`badge badge-${d.tipoDonacion.toLowerCase()}`}>
-                      {d.tipoDonacion}
-                    </span>
-                  </td>
-                  <td>{d.cantidad} {d.unidadMedida}</td>
-                  <td>{d.detalle}</td>
+                <tr>
+                  <th>ID</th>
+                  <th>Donante</th>
+                  <th>Categoría</th>
+                  <th>Producto</th>
+                  <th>Cantidad</th>
+                  <th>Detalle</th>
+                  {rol !== 'USER' && rol !== 'GUEST' && <th>Acciones</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {donaciones.map((d) => (
+                  <tr key={d.id}>
+                    <td>{d.id}</td>
+                    <td style={{ fontWeight: '500' }}>{d.nombreDonante}</td>
+                    <td>
+                      <span className={`badge badge-${d.categoria.toLowerCase()}`}>
+                        {d.categoria}
+                      </span>
+                    </td>
+                    <td>{d.producto}</td>
+                    <td>{d.cantidad} {d.unidadMedida}</td>
+                    <td>{d.detalle}</td>
                   {rol !== 'USER' && rol !== 'GUEST' && (
                     <td>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>

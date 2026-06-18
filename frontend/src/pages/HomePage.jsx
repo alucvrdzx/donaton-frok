@@ -4,24 +4,27 @@ const HomePage = () => {
   const [stats, setStats] = useState({
     donaciones: [],
     inventario: [],
-    logistica: []
+    logistica: [],
+    necesidades: []
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchAllData = async () => {
       try {
-        const [resDonaciones, resInventario, resLogistica] = await Promise.all([
+        const [resDonaciones, resInventario, resLogistica, resNecesidades] = await Promise.all([
           fetch('http://localhost:3001/api/donaciones').catch(() => ({ ok: false })),
           fetch('http://localhost:3001/api/inventario').catch(() => ({ ok: false })),
-          fetch('http://localhost:3001/api/logistica').catch(() => ({ ok: false }))
+          fetch('http://localhost:3001/api/logistica').catch(() => ({ ok: false })),
+          fetch('http://localhost:3001/api/necesidades').catch(() => ({ ok: false }))
         ]);
 
         const donaciones = resDonaciones.ok ? await resDonaciones.json() : [];
         const inventario = resInventario.ok ? await resInventario.json() : [];
         const logistica = resLogistica.ok ? await resLogistica.json() : [];
+        const necesidades = resNecesidades.ok ? await resNecesidades.json() : [];
 
-        setStats({ donaciones, inventario, logistica });
+        setStats({ donaciones, inventario, logistica, necesidades });
         setLoading(false);
       } catch (error) {
         console.error("Error cargando dashboard:", error);
@@ -104,7 +107,7 @@ const HomePage = () => {
         </section>
 
         {/* 3. SECCIÓN DE ESTADÍSTICAS */}
-        <section className="stats-grid" style={{ margin: 0, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
+        <section className="stats-grid" style={{ margin: 0, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem' }}>
           <div className="stat-card" style={{ borderTop: '5px solid #8b5cf6', margin: 0, padding: '2rem', textAlign: 'left' }}>
             <div className="stat-label" style={{ marginBottom: '0.8rem', color: 'var(--text-primary)', fontWeight: 'bold', fontSize: '1rem' }}>Total Donaciones</div>
             <div className="stat-value" style={{ margin: 0, fontSize: '3.5rem' }}>{stats.donaciones.length}</div>
@@ -117,6 +120,10 @@ const HomePage = () => {
             <div className="stat-label" style={{ marginBottom: '0.8rem', color: 'var(--text-primary)', fontWeight: 'bold', fontSize: '1rem' }}>Envíos Logísticos</div>
             <div className="stat-value" style={{ margin: 0, fontSize: '3.5rem' }}>{stats.logistica.length}</div>
           </div>
+          <div className="stat-card" style={{ borderTop: '5px solid #f43f5e', margin: 0, padding: '2rem', textAlign: 'left' }}>
+            <div className="stat-label" style={{ marginBottom: '0.8rem', color: 'var(--text-primary)', fontWeight: 'bold', fontSize: '1rem' }}>Necesidades Activas</div>
+            <div className="stat-value" style={{ margin: 0, fontSize: '3.5rem' }}>{Array.isArray(stats.necesidades) ? stats.necesidades.filter(n => n.estado !== 'CUBIERTA').length : 0}</div>
+          </div>
         </section>
 
         {/* 4. ESTADO DE MICROSERVICIOS */}
@@ -124,7 +131,7 @@ const HomePage = () => {
           <h2 style={{ fontSize: '1.4rem', margin: '0 0 1.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)' }}>
             🌐 Estado de Microservicios
           </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', color: 'var(--text-secondary)', fontSize: '1.1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem', color: 'var(--text-secondary)', fontSize: '1.1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <span style={{ color: '#10b981', fontSize: '1.4rem' }}>✅</span> <b>Servicio de Donaciones</b>
             </div>
@@ -133,6 +140,9 @@ const HomePage = () => {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <span style={{ color: '#10b981', fontSize: '1.4rem' }}>✅</span> <b>Servicio de Logística</b>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ color: '#10b981', fontSize: '1.4rem' }}>✅</span> <b>Servicio de Necesidades</b>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <span style={{ color: '#10b981', fontSize: '1.4rem' }}>✅</span> <b>API Gateway</b>

@@ -32,7 +32,7 @@ public class DonacionController {
     @Operation(summary = "Crear una nueva donación")
     @PostMapping
     public DonacionDetalle crear(@RequestBody DonacionDetalle d) {
-        return service.crearDonacion(d.getNombreDonante(), d.getTipoDonacion(), d.getCantidad(), d.getDetalle());
+        return service.crearDonacion(d.getNombreDonante(), d.getCategoria(), d.getProducto(), d.getCantidad(), d.getDetalle());
     }
 
     @Operation(summary = "Obtener listado de donaciones")

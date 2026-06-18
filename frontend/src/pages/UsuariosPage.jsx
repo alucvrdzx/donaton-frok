@@ -1,3 +1,4 @@
+import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 
 const UsuariosPage = () => {
@@ -42,13 +43,13 @@ const UsuariosPage = () => {
       });
       
       if (response.ok) {
-        alert("Rol actualizado exitosamente.");
+        toast.success("Rol actualizado exitosamente.");
         fetchUsuarios();
       } else {
-        alert("Error al actualizar rol.");
+        toast.error("Error al actualizar rol.");
       }
     } catch (error) {
-      alert("Error de conexión.");
+      toast.error("Error de conexión.");
     }
   };
 
@@ -65,10 +66,10 @@ const UsuariosPage = () => {
       if (response.ok) {
         fetchUsuarios();
       } else {
-        alert("Error al eliminar el usuario.");
+        toast.error("Error al eliminar el usuario.");
       }
     } catch (error) {
-      alert("Error de conexión.");
+      toast.error("Error de conexión.");
     }
   };
 

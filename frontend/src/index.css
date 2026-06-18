@@ -81,7 +81,7 @@ body {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.stat-card:hover {
+.stat-card:not(.no-hover):hover {
   transform: translateY(-5px);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
 }
@@ -384,5 +384,31 @@ body {
 @media (max-width: 768px) {
   .auth-image {
     display: none !important;
+  }
+}
+
+/* Layout Admin Responsive */
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg-dark);
+}
+
+.admin-content {
+  flex: 1;
+  margin-left: 260px;
+  padding: 2rem;
+  width: calc(100% - 260px);
+  transition: all 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .admin-layout {
+    flex-direction: column;
+  }
+  .admin-content {
+    margin-left: 0;
+    width: 100%;
+    padding: 1rem;
   }
 }
