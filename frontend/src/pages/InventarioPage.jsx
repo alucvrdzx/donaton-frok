@@ -334,7 +334,7 @@ const InventarioPage = () => {
                   </div>
                 </summary>
 
-                <div style={{ padding: '0 1.5rem 1.5rem' }}>
+                <div className="data-table-container" style={{ padding: '0 1.5rem 1.5rem', background: 'transparent', border: 'none', boxShadow: 'none' }}>
                   <table className="data-table" style={{ margin: 0 }}>
                     <thead>
                       <tr>
