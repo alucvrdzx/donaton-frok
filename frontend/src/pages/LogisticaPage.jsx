@@ -25,6 +25,8 @@ const LogisticaPage = () => {
   const [lat, setLat] = useState(null);
   const [lng, setLng] = useState(null);
 
+  const [sedes, setSedes] = useState([]);
+
   const fetchLogistica = async () => {
     setLoading(true);
     try {
@@ -36,6 +38,17 @@ const LogisticaPage = () => {
       console.error("Error al cargar logística:", error);
     }
     setLoading(false);
+  };
+
+  const fetchSedes = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/api/sedes');
+      const data = await response.json();
+      const content = data.content || data;
+      setSedes(content);
+    } catch (error) {
+      console.error("Error al cargar sedes:", error);
+    }
   };
 
   const fetchInventario = async () => {
@@ -69,6 +82,7 @@ const LogisticaPage = () => {
     fetchLogistica();
     fetchInventario();
     fetchNecesidades();
+    fetchSedes();
   }, []);
 
   const getStockDisponible = () => {
@@ -231,7 +245,7 @@ const LogisticaPage = () => {
         {loading ? (
            <SkeletonLoader count={1} type="card" />
         ) : (
-           <MapaLogistica envios={logistica} />
+           <MapaLogistica envios={logistica} sedes={sedes} necesidades={necesidades} />
         )}
       </div>
 

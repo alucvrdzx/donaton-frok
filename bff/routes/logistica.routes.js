@@ -8,4 +8,9 @@ router.put('/logistica/:id/estado',   createProxy('put',    '/logistica/:id/esta
 router.put('/logistica/:id',          createProxy('put',    '/logistica/:id'));
 router.delete('/logistica/:id',       createProxy('delete', '/logistica/:id', { statusCode: 204 }));
 
+// Sedes
+router.get('/sedes',                  createProxy('get',    '/logistica/sedes', { passQuery: true }));
+router.post('/sedes',                 createProxy('post',   '/logistica/sedes', { statusCode: 201 }));
+router.get('/sedes/cercana',          createProxy('get',    '/logistica/sedes/cercana', { passQuery: true }));
+
 module.exports = router;

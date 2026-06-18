@@ -13,11 +13,48 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
+// Icono para sedes
+const sedeIcon = new L.divIcon({
+  html: `
+    <div style="display: flex; flex-direction: column; align-items: center; margin-top: -10px;">
+      <div style="font-size: 24px; background: white; border-radius: 50%; padding: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); border: 2px solid #3b82f6; display: flex; justify-content: center; align-items: center; width: 34px; height: 34px;">
+        🏛️
+      </div>
+      <div style="background: rgba(255,255,255,0.9); padding: 1px 4px; border-radius: 4px; font-size: 10px; font-weight: bold; color: #1e293b; margin-top: 2px; border: 1px solid #ccc;">
+        Sede
+      </div>
+    </div>
+  `,
+  className: 'emoji-icon',
+  iconSize: [40, 50],
+  iconAnchor: [20, 50],
+  popupAnchor: [0, -50]
+});
+
+// Icono para necesidades activas
+const necesidadIcon = new L.divIcon({
+  html: `
+    <div style="display: flex; flex-direction: column; align-items: center; margin-top: -10px;">
+      <div style="font-size: 24px; background: white; border-radius: 50%; padding: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); border: 2px solid #ef4444; display: flex; justify-content: center; align-items: center; width: 34px; height: 34px;">
+        📍
+      </div>
+      <div style="background: rgba(255,255,255,0.9); padding: 1px 4px; border-radius: 4px; font-size: 10px; font-weight: bold; color: #ef4444; margin-top: 2px; border: 1px solid #ccc;">
+        Emergencia
+      </div>
+    </div>
+  `,
+  className: 'emoji-icon',
+  iconSize: [40, 50],
+  iconAnchor: [20, 50],
+  popupAnchor: [0, -50]
+});
+
 const NecesidadesPage = () => {
   const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
   const rol = user ? user.rol : 'GUEST';
 
   const [necesidades, setNecesidades] = useState([]);
+  const [sedes, setSedes] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Form states
@@ -93,8 +130,20 @@ const NecesidadesPage = () => {
     setLoading(false);
   };
 
+  const fetchSedes = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/api/sedes');
+      const data = await response.json();
+      const content = data.content || data;
+      setSedes(Array.isArray(content) ? content : []);
+    } catch (error) {
+      console.error("Error al cargar sedes:", error);
+    }
+  };
+
   useEffect(() => {
     fetchNecesidades();
+    fetchSedes();
   }, []);
 
   const handleSubmit = async (e) => {
@@ -337,6 +386,45 @@ const NecesidadesPage = () => {
               />
               <ChangeView center={lat && lng ? [lat, lng] : null} />
               <LocationMarker />
+              
+              {/* Renderizar sedes en el mapa de necesidades */}
+              {sedes.length > 0 ? (
+                sedes.map(sede => (
+                  <Marker key={`sede-${sede.id}`} position={[sede.lat, sede.lng]} icon={sedeIcon}>
+                    <Popup>
+                      <strong>Sede {sede.tipo === 'CENTRAL' ? 'Central' : 'Regional'}: {sede.nombre}</strong>
+                      <br />
+                      {sede.direccion}
+                    </Popup>
+                  </Marker>
+                ))
+              ) : (
+                <Marker position={[-33.4489, -70.6693]} icon={sedeIcon}>
+                  <Popup>
+                    <strong>Sede Central Donatón</strong>
+                    <br />
+                    Punto de acopio principal.
+                  </Popup>
+                </Marker>
+              )}
+
+              {/* Renderizar necesidades activas (no cubiertas) */}
+              {necesidades.filter(n => n.estado !== 'CUBIERTA').map(n => {
+                if (n.lat && n.lng) {
+                  return (
+                    <Marker key={`nec-${n.id}`} position={[n.lat, n.lng]} icon={necesidadIcon}>
+                      <Popup>
+                        <strong>{n.titulo}</strong>
+                        <br />
+                        {n.producto} - Faltan: {n.cantidadRequerida - n.cantidadCubierta}
+                        <br />
+                        Estado: {n.estado}
+                      </Popup>
+                    </Marker>
+                  );
+                }
+                return null;
+              })}
             </MapContainer>
           </div>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '-0.5rem' }}>
