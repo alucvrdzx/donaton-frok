@@ -419,6 +419,7 @@ body {
 .data-table-container {
   width: 100%;
   max-width: 100%;
+  box-sizing: border-box; /* Fundamental para que padding no ensanche más del 100% */
   overflow-x: auto;
   -webkit-overflow-scrolling: touch; /* Scroll suave en móviles */
   background: rgba(30, 41, 59, 0.5);
