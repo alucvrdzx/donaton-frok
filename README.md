@@ -1,185 +1,148 @@
-# Proyecto Donaton - Plataforma de Microservicios
+# 🌟 Proyecto Donatón - Plataforma Humanitaria de Microservicios
 
-Donaton es una plataforma humanitaria basada en una arquitectura de microservicios robusta (Spring Boot), orquestada con Docker Compose, y consumida mediante un BFF (Node.js) hacia un Frontend moderno (React con Vite).
-
-## Arquitectura
-
-```
-┌─────────────┐     ┌──────────┐     ┌──────────────┐     ┌──────────────────────────┐
-│  Frontend   │────▶│   BFF    │────▶│ API Gateway  │────▶│  Microservicios (x5)     │
-│  React/Vite │     │ Node.js  │     │ Spring Cloud │     │  Auth · Donaciones ·     │
-│  :5173      │     │  :3001   │     │    :8080     │     │  Inventario · Logística  │
-└─────────────┘     └──────────┘     └──────────────┘     │  Necesidades             │
-                                                          └──────────────────────────┘
-                                                                    │
-                                                          ┌────────────────────┐
-                                                          │  PostgreSQL (x5)   │
-                                                          │  RabbitMQ · Redis  │
-                                                          └────────────────────┘
-```
-
-## Requisitos Previos
-
-Asegúrate de tener instalados los siguientes programas antes de comenzar:
-
-| Herramienta | Versión mínima | Descarga |
-|---|---|---|
-| Docker Desktop | 4.x | [docker.com](https://www.docker.com/products/docker-desktop/) |
-| Java (JDK) | 17 | [adoptium.net](https://adoptium.net/es/) |
-| Node.js | 18+ | [nodejs.org](https://nodejs.org/) |
-| Git | 2.x | [git-scm.com](https://git-scm.com/) |
-
-> ⚠️ **Docker Desktop debe estar iniciado y corriendo** antes de ejecutar los comandos.
+Donatón es una plataforma tecnológica integral orientada a la gestión y logística de ayuda humanitaria. El ecosistema cuenta con una sólida arquitectura de **Microservicios (Spring Boot)**, alta tolerancia a fallos mediante un bus de eventos asíncrono (**RabbitMQ**), una capa agregadora **BFF (Node.js)**, y un moderno **Frontend reactivo (Vite + React)**.
 
 ---
 
-## 🚀 Levantar el Proyecto Completo
+## 🏗 Arquitectura del Sistema
 
-### Paso 1 — Clonar el repositorio
-```bash
-git clone <URL_DE_TU_REPOSITORIO_GITHUB>
-cd donaton
+El proyecto implementa *Clean Architecture* e integración orientada a eventos (*Event-Driven Architecture*), asegurando alta disponibilidad y escabilidad horizontal:
+
+```mermaid
+graph LR
+    A[Frontend React] -->|REST| B(BFF Node.js)
+    B -->|REST| C(API Gateway :8080)
+    C -->|Ruteo HTTP| D[Microservicios]
+    D --> E[(Bases de Datos Independientes Postgres)]
+    D <-->|Eventos Asíncronos| F((RabbitMQ))
 ```
 
-### Paso 2 — Compilar los Microservicios (Backend)
+* **Microservicios Core (x5):** Autenticación, Donaciones, Inventario, Logística, Necesidades.
+* **Persistencia:** Bases de datos PostgreSQL (Aislamiento fuerte: 1 BD autónoma por microservicio).
+* **Caching & Message Broker:** Memoria en Redis y Cola de Mensajes en RabbitMQ.
 
-Los Dockerfiles utilizan los archivos `.jar` compilados, por lo tanto es necesario empaquetarlos primero.
+---
 
-**Windows PowerShell:**
+## 💻 Manual de Despliegue en Windows (How-To Run)
+
+Sigue estos pasos para compilar todo el ecosistema y ejecutarlo de forma impecable desde tu terminal en Windows.
+
+### 📋 Requisitos Previos
+
+Asegúrate de contar con lo siguiente en tu entorno Windows:
+1. **Docker Desktop:** v4.x o superior. *(Debe estar iniciado y el ícono de la ballena activo en la barra de tareas)*.
+2. **Java (JDK):** Versión 17. (Agregado a tu variable de entorno `PATH`).
+3. **Apache Maven:** Versión 3.8 o superior. (Agregado al `PATH`).
+4. **Node.js:** Versión 18+ o 20+.
+5. **Git:** Versión 2.x.
+
+### 🔑 Variables de Entorno
+
+El sistema usa credenciales por defecto. Si necesitas personalizarlas en el entorno de desarrollo, deberás sobrescribir las siguientes variables en tus comandos o inyectarlas en tu entorno:
+* `DB_PASSWORD` (Por defecto: `admin123`)
+* `DB_AUTH_PASSWORD` (Por defecto: `1234`)
+* `JWT_SECRET` (Por defecto: `esta_es_una_clave_secreta_muy_larga_y_segura_dev_only_123456`)
+
+---
+
+### 🚀 Paso 1: Clonar y Compilar el Backend (Terminal PowerShell)
+
+Abre **PowerShell** y ejecuta la compilación de todos los microservicios omitiendo temporalmente los tests (ya que asumen BD viva):
+
 ```powershell
-Push-Location services\authservice;   .\mvnw.cmd clean package -DskipTests -q; Pop-Location
-Push-Location services\donaciones;    .\mvnw.cmd clean package -DskipTests -q; Pop-Location
-Push-Location services\inventario;    .\mvnw.cmd clean package -DskipTests -q; Pop-Location
-Push-Location services\logistica;     .\mvnw.cmd clean package -DskipTests -q; Pop-Location
-Push-Location services\necesidades;   .\mvnw.cmd clean package -DskipTests -q; Pop-Location
-Push-Location services\gateway;       .\mvnw.cmd clean package -DskipTests -q; Pop-Location
+# 1. Clonar el repositorio
+git clone <URL_DEL_REPOSITORIO>
+cd donaton
+
+# 2. Compilar microservicios
+Push-Location services\authservice;   mvn clean package -DskipTests -q; Pop-Location
+Push-Location services\donaciones;    mvn clean package -DskipTests -q; Pop-Location
+Push-Location services\gateway;       mvn clean package -DskipTests -q; Pop-Location
+Push-Location services\inventario;    mvn clean package -DskipTests -q; Pop-Location
+Push-Location services\logistica;     mvn clean package -DskipTests -q; Pop-Location
+Push-Location services\necesidades;   mvn clean package -DskipTests -q; Pop-Location
 ```
 
-**Linux / macOS:**
-```bash
-for svc in authservice donaciones inventario logistica necesidades gateway; do
-  (cd services/$svc && ./mvnw clean package -DskipTests -q)
-done
-```
+### 🐳 Paso 2: Levantar la Infraestructura Backend (Docker)
 
-### Paso 3 — Levantar toda la infraestructura con Docker Compose
+En la misma consola (ubicado en la raíz `donaton\`), inicializa el ecosistema Docker:
 
-```bash
+```powershell
+# Levanta BDs, RabbitMQ, Redis, Gateway y Microservicios.
 docker compose up -d --build
 ```
+> **Tip:** Ejecuta `docker ps` para asegurarte que los 13 contenedores están "Up" (Corriendo).
 
-Esto creará y levantará **13 contenedores**: 5 bases de datos PostgreSQL, RabbitMQ, Redis, 5 microservicios Java y el API Gateway.
+### 🛠 Paso 3: Levantar el Backend For Frontend (Node.js)
 
-Verifica que todo esté corriendo:
-```bash
-docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-```
+Abre una **NUEVA pestaña** de PowerShell, navega a la raíz del proyecto y corre el BFF:
 
-### Paso 4 — Levantar el BFF (Node.js)
-
-```bash
+```powershell
 cd bff
 npm install
-node index.js
+npm run dev
 ```
-> Deberías ver: `🚀 BFF (Node.js) corriendo en http://localhost:3001`
+*(Mantén esta pestaña abierta. Mostrará que corre en `http://localhost:3001`)*
 
-### Paso 5 — Levantar el Frontend (React)
+### 🎨 Paso 4: Levantar la Interfaz Web (React)
 
-```bash
+Abre otra **NUEVA pestaña** de PowerShell, navega a la raíz del proyecto y corre el Frontend:
+
+```powershell
 cd frontend
 npm install
 npm run dev
 ```
-> Deberías ver el mensaje de Vite indicando que la app corre en `http://localhost:5173`
+*(Mantén esta pestaña abierta. Accede a la plataforma en `http://localhost:5173`)*
 
 ---
 
-## 🧪 Ejecutar Tests Unitarios
+## 🧪 Ejecutar los Tests Automatizados en Windows
 
-Cada microservicio tiene tests unitarios con JUnit 5 + Mockito. Para ejecutarlos:
+Para correr la suite de testing unitario y validar el correcto funcionamiento de las capas de negocio:
 
 ```powershell
-# Donaciones (9 tests)
-Push-Location services\donaciones; .\mvnw.cmd test -Dtest="DonacionServiceTest" -q; Pop-Location
-
-# Inventario (7 tests)
-Push-Location services\inventario; .\mvnw.cmd test -Dtest="InventarioServiceTest" -q; Pop-Location
-
-# Logística (7 tests)
-Push-Location services\logistica; .\mvnw.cmd test -Dtest="LogisticaServiceTest" -q; Pop-Location
-
-# Necesidades (5 tests)
-Push-Location services\necesidades; .\mvnw.cmd test -Dtest="NecesidadServiceTest" -q; Pop-Location
+# Desde la raíz del proyecto, ejecuta:
+Push-Location services\donaciones; mvn test -Dtest="*Test" -q; Pop-Location
+Push-Location services\inventario; mvn test -Dtest="*Test" -q; Pop-Location
+Push-Location services\logistica;  mvn test -Dtest="*Test" -q; Pop-Location
+Push-Location services\necesidades; mvn test -Dtest="*Test" -q; Pop-Location
 ```
-
-> **Nota:** Los tests `*ApplicationTests` (contextLoads) requieren conexión a las bases de datos reales. Para ejecutar solo los tests unitarios sin infraestructura, usa el flag `-Dtest="NombreDelTest"`.
 
 ---
 
-## 🌐 Enlaces y Puertos
+## 🌐 Recursos, Puertos y Accesos
 
-| Componente | URL |
+| Recurso | URL |
 |---|---|
-| **Frontend Web** | http://localhost:5173 |
-| **BFF (Node.js)** | http://localhost:3001/api |
-| **API Gateway** | http://localhost:8080 |
-| **RabbitMQ Management** | http://localhost:15672 (guest/guest) |
+| **Plataforma Web (Frontend)** | http://localhost:5173 |
+| **BFF Endpoint Base** | http://localhost:3001/api |
+| **RabbitMQ Manager** | http://localhost:15672 |
 
-### Swagger UI (Documentación interactiva de cada API)
+*(Credenciales RabbitMQ: `guest` / `guest`)*
+*(Credenciales de prueba Admin Web: `admin@administrador.cl` / `admin123`)*
 
-| Servicio | URL |
-|---|---|
-| Autenticación | http://localhost:8084/swagger-ui/index.html |
-| Donaciones | http://localhost:8081/swagger-ui/index.html |
-| Inventario | http://localhost:8086/swagger-ui/index.html |
-| Logística | http://localhost:8083/swagger-ui/index.html |
-| Necesidades | http://localhost:8085/swagger-ui/index.html |
-
-### Paginación de APIs
-
-Todos los endpoints GET de listado soportan paginación mediante query params:
-```
-GET /donaciones?page=0&size=10&sort=id,desc
-GET /inventario?page=0&size=20
-GET /logistica?page=0&size=5
-GET /necesidades?page=0&size=10
-```
-
-La respuesta paginada tiene la siguiente estructura:
-```json
-{
-  "content": [...],
-  "totalElements": 42,
-  "totalPages": 5,
-  "number": 0,
-  "size": 10
-}
-```
+### 📖 Swagger UI (Documentación interactiva de cada API)
+* **AuthService:** http://localhost:8084/swagger-ui/index.html
+* **Donaciones:** http://localhost:8081/swagger-ui/index.html
+* **Inventario:** http://localhost:8086/swagger-ui/index.html
+* **Logística:** http://localhost:8083/swagger-ui/index.html
+* **Necesidades:** http://localhost:8085/swagger-ui/index.html
 
 ---
 
-## 🔐 Credenciales por defecto
+## 🛑 Cómo Apagar el Sistema
 
-| Recurso | Usuario | Contraseña |
-|---|---|---|
-| App Web (Admin) | admin@administrador.cl | admin123 |
-| PostgreSQL | postgres | admin123 |
-| PostgreSQL (Auth) | postgres | 1234 |
-| RabbitMQ | guest | guest |
+Para detener todos los servicios de forma segura y liberar recursos del PC:
 
----
-
-## ¿Cómo apagar todo?
-
-```bash
-# Detener contenedores Docker
+```powershell
+# En la consola raíz
 docker compose down
 
-# En las terminales de BFF y Frontend, presiona Ctrl + C
+# Presiona Ctrl + C en las pestañas de BFF y Frontend
 ```
 
-Para borrar contenedores **y sus datos**:
-```bash
+Para borrar la infraestructura profunda (incluyendo las bases de datos de desarrollo):
+```powershell
 docker compose down -v
 ```
