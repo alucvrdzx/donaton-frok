@@ -32,7 +32,9 @@ public class UsuarioService {
             .rol("USER") // Público siempre es USER
             .build();
         
-        return usuarioRepository.save(nuevoUsuario);
+        @SuppressWarnings("null")
+        Usuario saved = usuarioRepository.save(nuevoUsuario);
+        return saved;
     }
 
     // Registro para ADMIN (Este sí detecta dominios @administrador y @donaton)
@@ -54,7 +56,9 @@ public class UsuarioService {
             .rol(rolAsignado)
             .build();
         
-        return usuarioRepository.save(personal);
+        @SuppressWarnings("null")
+        Usuario savedPersonal = usuarioRepository.save(personal);
+        return savedPersonal;
     }
 
     // --- Métodos de Gestión (Solo Admin) ---

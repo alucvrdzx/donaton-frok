@@ -124,4 +124,49 @@ public class InventarioServiceTest {
         assertThrows(ResourceNotFoundException.class, () -> inventarioService.eliminar(99L));
         verify(inventarioRepository, never()).deleteById(any());
     }
+
+    @Test
+    void debeImpedirStockNegativo() {
+        Inventario inventario = new Inventario(
+                1L,
+                "ROPA",
+                "Polera",
+                5.0,
+                "Polera",
+                "unidades", null); // added null for version to match constructor
+
+        when(inventarioRepository.findByCategoriaAndProductoAndDetalle(
+                "ROPA",
+                "Polera",
+                "Polera"))
+                .thenReturn(Optional.of(inventario));
+
+        inventarioService.descontarStock(
+                "ROPA",
+                "Polera",
+                "Polera",
+                10.0);
+
+        assertEquals(0.0, inventario.getStock());
+
+        verify(inventarioRepository).save(inventario);
+    }
+
+    @Test
+    void debeCrearProductoNuevoCuandoNoExisteEnInventario() {
+        when(inventarioRepository.findByCategoriaAndProductoAndDetalle(
+                "ALIMENTO",
+                "Arroz",
+                "Arroz"))
+                .thenReturn(Optional.empty());
+
+        inventarioService.agregarStock(
+                "ALIMENTO",
+                "Arroz",
+                "Arroz",
+                20.0,
+                "kilos");
+
+        verify(inventarioRepository).save(any(Inventario.class));
+    }
 }

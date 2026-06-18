@@ -22,6 +22,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -115,5 +116,142 @@ public class LogisticaServiceTest {
         when(logisticaRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> logisticaService.eliminar(99L));
+    }
+
+    @Test
+    void debeActualizarEstadoAEntregadoYEnviarEvento() {
+        Logistica envio = new Logistica(
+                1L,
+                "Hogar de Cristo",
+                null,
+                null,
+                1L,
+                EstadoLogistica.PENDIENTE,
+                "ROPA",
+                "Polera",
+                10.0,
+                null);
+
+        when(logisticaRepository.findById(1L)).thenReturn(Optional.of(envio));
+        when(logisticaRepository.save(any(Logistica.class))).thenReturn(envio);
+
+        LogisticaResponse resultado = logisticaService.actualizarEstado(1L, "ENTREGADO");
+
+        assertNotNull(resultado);
+        assertEquals(EstadoLogistica.ENTREGADO, resultado.estado());
+        verify(logisticaRepository).save(envio);
+        verify(rabbitTemplate, atLeastOnce()).convertAndSend(anyString(), anyString(), any(Object.class));
+    }
+
+    @Test
+    void debeNoEnviarEventoSiYaEstabaEntregado() {
+        Logistica envio = new Logistica(
+                1L,
+                "Hogar de Cristo",
+                null,
+                null,
+                1L,
+                EstadoLogistica.ENTREGADO,
+                "ROPA",
+                "Polera",
+                10.0,
+                null);
+
+        when(logisticaRepository.findById(1L)).thenReturn(Optional.of(envio));
+
+        LogisticaResponse resultado = logisticaService.actualizarEstado(1L, "ENTREGADO");
+
+        assertNotNull(resultado);
+        assertEquals(EstadoLogistica.ENTREGADO, resultado.estado());
+        verify(logisticaRepository, never()).save(any());
+        verify(rabbitTemplate, never()).convertAndSend(anyString(), anyString(), any(Object.class));
+    }
+
+    @Test
+    void debeEliminarEnvioEntregadoYDevolverStock() {
+        Logistica envio = new Logistica(
+                1L,
+                "Hogar de Cristo",
+                null,
+                null,
+                1L,
+                EstadoLogistica.ENTREGADO,
+                "ROPA",
+                "Polera",
+                10.0,
+                null);
+
+        when(logisticaRepository.findById(1L)).thenReturn(Optional.of(envio));
+
+        logisticaService.eliminar(1L);
+
+        verify(logisticaRepository).deleteById(1L);
+        verify(rabbitTemplate).convertAndSend(anyString(), anyString(), any(Object.class));
+    }
+
+    @Test
+    void debeDescontarMasStockCuandoAumentaCantidadDeEnvioEntregado() {
+        Logistica anterior = new Logistica(
+                1L,
+                "Hogar de Cristo",
+                null,
+                null,
+                1L,
+                EstadoLogistica.ENTREGADO,
+                "ROPA",
+                "Polera",
+                10.0,
+                null);
+
+        LogisticaRequest nuevosDatos = new LogisticaRequest(
+                "Hogar de Cristo",
+                null,
+                null,
+                1L,
+                EstadoLogistica.ENTREGADO,
+                "ROPA",
+                "Polera",
+                15.0,
+                null);
+
+        when(logisticaRepository.findById(1L)).thenReturn(Optional.of(anterior));
+        when(logisticaRepository.save(any(Logistica.class))).thenReturn(anterior);
+
+        logisticaService.actualizar(1L, nuevosDatos);
+
+        verify(rabbitTemplate).convertAndSend(anyString(), anyString(), any(Object.class));
+    }
+
+    @Test
+    void debeDevolverStockCuandoDisminuyeCantidadDeEnvioEntregado() {
+        Logistica anterior = new Logistica(
+                1L,
+                "Hogar de Cristo",
+                null,
+                null,
+                1L,
+                EstadoLogistica.ENTREGADO,
+                "ROPA",
+                "Polera",
+                15.0,
+                null);
+
+        LogisticaRequest nuevosDatos = new LogisticaRequest(
+                "Hogar de Cristo",
+                null,
+                null,
+                1L,
+                EstadoLogistica.ENTREGADO,
+                "ROPA",
+                "Polera",
+                10.0,
+                null);
+
+        when(logisticaRepository.findById(1L)).thenReturn(Optional.of(anterior));
+        when(logisticaRepository.save(any(Logistica.class))).thenReturn(anterior);
+
+        logisticaService.actualizar(1L, nuevosDatos);
+
+        verify(rabbitTemplate).convertAndSend(anyString(), anyString(), any(Object.class));
     }
 }

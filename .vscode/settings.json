@@ -1,5 +1,12 @@
 {
     "java.project.sourcePaths": [
         "services/logistica/src/main/java"
-    ]
+    ],
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "[java]": {
+        "editor.defaultFormatter": "redhat.java",
+        "editor.formatOnSave": true
+    },
+    "java.refactoring.rename.enablePreview": false,
+    "java.saveActions.organizeImports": true
 }
