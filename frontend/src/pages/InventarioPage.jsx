@@ -250,7 +250,7 @@ const InventarioPage = () => {
               style={{ width: '100%' }}
             />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div className="responsive-grid-2">
             <input 
               type="number" 
               step="0.01"

@@ -645,3 +645,22 @@ body {
     padding: 1.5rem;
   }
 }
+
+/* Utilities for responsive forms */
+.responsive-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.responsive-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .responsive-grid-2, .responsive-grid-3 {
+    grid-template-columns: 1fr !important;
+  }
+}

@@ -250,7 +250,7 @@ const LogisticaPage = () => {
       </div>
 
       {rol !== 'USER' && rol !== 'GUEST' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '3rem' }}>
+        <div className="responsive-grid-2" style={{ marginBottom: '3rem' }}>
 
         {/* Formulario */}
         <div className="stat-card" style={{ textAlign: 'left', margin: 0, height: '100%' }}>
@@ -284,7 +284,7 @@ const LogisticaPage = () => {
               value={destino}
               onChange={(e) => setDestino(e.target.value)}
             />
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div className="responsive-grid-2">
               <select
                 value={categoria}
                 onChange={(e) => {
