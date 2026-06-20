@@ -27,7 +27,7 @@ const AdminSidebar = ({ rol }) => {
     <>
       {/* Mobile Toggle Button */}
       <button className="mobile-sidebar-toggle" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-        {isSidebarOpen ? '✖' : '☰'} Menú
+        {isSidebarOpen ? '✖' : '☰'}
       </button>
 
       {/* Backdrop for mobile */}
