@@ -13,7 +13,7 @@ const UsuariosPage = () => {
     }
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:3001/api/usuarios', {
+      const response = await fetch('https://worcester-alex-despite-facts.trycloudflare.com/api/usuarios', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -37,7 +37,7 @@ const UsuariosPage = () => {
     
     const token = localStorage.getItem('token');
     try {
-      const response = await fetch(`http://localhost:3001/api/usuarios/${id}/rol`, {
+      const response = await fetch(`https://worcester-alex-despite-facts.trycloudflare.com/api/usuarios/${id}/rol`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -62,7 +62,7 @@ const UsuariosPage = () => {
     
     const token = localStorage.getItem('token');
     try {
-      const response = await fetch(`http://localhost:3001/api/usuarios/${id}`, {
+      const response = await fetch(`https://worcester-alex-despite-facts.trycloudflare.com/api/usuarios/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

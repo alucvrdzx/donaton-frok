@@ -13,10 +13,10 @@ const HomePage = () => {
     const fetchAllData = async () => {
       try {
         const [resDonaciones, resInventario, resLogistica, resNecesidades] = await Promise.all([
-          fetch('http://localhost:3001/api/donaciones').catch(() => ({ ok: false })),
-          fetch('http://localhost:3001/api/inventario').catch(() => ({ ok: false })),
-          fetch('http://localhost:3001/api/logistica').catch(() => ({ ok: false })),
-          fetch('http://localhost:3001/api/necesidades').catch(() => ({ ok: false }))
+          fetch('https://worcester-alex-despite-facts.trycloudflare.com/api/donaciones').catch(() => ({ ok: false })),
+          fetch('https://worcester-alex-despite-facts.trycloudflare.com/api/inventario').catch(() => ({ ok: false })),
+          fetch('https://worcester-alex-despite-facts.trycloudflare.com/api/logistica').catch(() => ({ ok: false })),
+          fetch('https://worcester-alex-despite-facts.trycloudflare.com/api/necesidades').catch(() => ({ ok: false }))
         ]);
 
         const rawDonaciones = resDonaciones.ok ? await resDonaciones.json() : [];
