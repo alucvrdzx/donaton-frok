@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,7 +32,7 @@ public class NecesidadController {
 
     @Operation(summary = "Obtener el listado paginado de todas las necesidades")
     @GetMapping
-    public Page<NecesidadResponse> listar(Pageable pageable) {
+    public Page<NecesidadResponse> listar(@ParameterObject Pageable pageable) {
         return necesidadService.listarTodas(pageable);
     }
 

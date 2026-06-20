@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -43,7 +44,7 @@ public class LogisticaController {
 
     @Operation(summary = "Obtener listado logístico paginado")
     @GetMapping
-    public Page<LogisticaResponse> listar(Pageable pageable) {
+    public Page<LogisticaResponse> listar(@ParameterObject Pageable pageable) {
         return service.listar(pageable);
     }
 

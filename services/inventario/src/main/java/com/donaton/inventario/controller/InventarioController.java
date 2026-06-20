@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -44,7 +45,7 @@ public class InventarioController {
 
     @Operation(summary = "Obtener listado del inventario")
     @GetMapping
-    public Page<InventarioResponse> listar(Pageable pageable) {
+    public Page<InventarioResponse> listar(@ParameterObject Pageable pageable) {
         return service.listar(pageable);
     }
 

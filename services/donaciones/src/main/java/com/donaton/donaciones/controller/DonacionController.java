@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -44,19 +45,19 @@ public class DonacionController {
 
     @Operation(summary = "Obtener listado de donaciones paginado")
     @GetMapping
-    public Page<DonacionResponse> listar(Pageable pageable) {
+    public Page<DonacionResponse> listar(@ParameterObject Pageable pageable) {
         return service.listar(pageable);
     }
 
     @Operation(summary = "Buscar donaciones por detalle paginado")
     @GetMapping("/detalle/{detalle}")
-    public Page<DonacionResponse> buscarPorDetalle(@PathVariable String detalle, Pageable pageable) {
+    public Page<DonacionResponse> buscarPorDetalle(@PathVariable String detalle, @ParameterObject Pageable pageable) {
         return service.buscarPorDetalle(detalle, pageable);
     }
 
     @Operation(summary = "Buscar donaciones por tipo paginado")
     @GetMapping("/tipo/{tipo}")
-    public Page<DonacionResponse> buscarPorTipo(@PathVariable String tipo, Pageable pageable) {
+    public Page<DonacionResponse> buscarPorTipo(@PathVariable String tipo, @ParameterObject Pageable pageable) {
         return service.buscarPorTipoDonacion(tipo, pageable);
     }
 
