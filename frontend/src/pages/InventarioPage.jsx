@@ -31,7 +31,7 @@ const InventarioPage = () => {
   const fetchInventario = async () => {
     setLoading(true);
     try {
-      const response = await fetch('https://worcester-alex-despite-facts.trycloudflare.com/api/inventario');
+      const response = await fetch('https://option-laden-investigator-careful.trycloudflare.com/api/inventario');
       const data = await response.json();
       const content = data.content || data;
       setInventario(content);
@@ -71,7 +71,7 @@ const InventarioPage = () => {
     try {
       const token = localStorage.getItem('token');
       if (editingId) {
-        await fetch(`https://worcester-alex-despite-facts.trycloudflare.com/api/inventario/${editingId}`, {
+        await fetch(`https://option-laden-investigator-careful.trycloudflare.com/api/inventario/${editingId}`, {
           method: 'PUT',
           headers: { 
             'Content-Type': 'application/json',
@@ -81,7 +81,7 @@ const InventarioPage = () => {
         });
         alert("¡Producto actualizado!");
       } else {
-        await fetch('https://worcester-alex-despite-facts.trycloudflare.com/api/inventario', {
+        await fetch('https://option-laden-investigator-careful.trycloudflare.com/api/inventario', {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
@@ -131,7 +131,7 @@ const InventarioPage = () => {
     if (!window.confirm("¿Estás seguro de eliminar este producto del inventario?")) return;
     try {
       const token = localStorage.getItem('token');
-      await fetch(`https://worcester-alex-despite-facts.trycloudflare.com/api/inventario/${id}`, {
+      await fetch(`https://option-laden-investigator-careful.trycloudflare.com/api/inventario/${id}`, {
         method: 'DELETE',
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });

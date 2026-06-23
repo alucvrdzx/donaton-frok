@@ -118,7 +118,7 @@ const NecesidadesPage = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('https://worcester-alex-despite-facts.trycloudflare.com/api/necesidades', {
+      const response = await fetch('https://option-laden-investigator-careful.trycloudflare.com/api/necesidades', {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
       const data = await response.json();
@@ -132,7 +132,7 @@ const NecesidadesPage = () => {
 
   const fetchSedes = async () => {
     try {
-      const response = await fetch('https://worcester-alex-despite-facts.trycloudflare.com/api/sedes');
+      const response = await fetch('https://option-laden-investigator-careful.trycloudflare.com/api/sedes');
       const data = await response.json();
       const content = data.content || data;
       setSedes(Array.isArray(content) ? content : []);
@@ -162,7 +162,7 @@ const NecesidadesPage = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('https://worcester-alex-despite-facts.trycloudflare.com/api/necesidades', {
+      const response = await fetch('https://option-laden-investigator-careful.trycloudflare.com/api/necesidades', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -209,7 +209,7 @@ const NecesidadesPage = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`https://worcester-alex-despite-facts.trycloudflare.com/api/necesidades/${id}/estado?estado=${nuevoEstado}`, {
+      const response = await fetch(`https://option-laden-investigator-careful.trycloudflare.com/api/necesidades/${id}/estado?estado=${nuevoEstado}`, {
         method: 'PATCH',
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
@@ -229,7 +229,7 @@ const NecesidadesPage = () => {
 
     try {
       const token = localStorage.getItem('token');
-      await fetch(`https://worcester-alex-despite-facts.trycloudflare.com/api/necesidades/${id}`, {
+      await fetch(`https://option-laden-investigator-careful.trycloudflare.com/api/necesidades/${id}`, {
         method: 'DELETE',
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });

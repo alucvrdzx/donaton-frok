@@ -15,7 +15,7 @@ const RegisterPage = () => {
     setLoading(true);
 
     try {
-      const res = await fetch('https://worcester-alex-despite-facts.trycloudflare.com/api/auth/registrar', {
+      const res = await fetch('https://option-laden-investigator-careful.trycloudflare.com/api/auth/registrar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nombre, correo, clave })

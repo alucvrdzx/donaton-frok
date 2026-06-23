@@ -30,7 +30,7 @@ const LogisticaPage = () => {
   const fetchLogistica = async () => {
     setLoading(true);
     try {
-      const response = await fetch('https://worcester-alex-despite-facts.trycloudflare.com/api/logistica');
+      const response = await fetch('https://option-laden-investigator-careful.trycloudflare.com/api/logistica');
       const data = await response.json();
       const content = data.content || data;
       setLogistica(content);
@@ -42,7 +42,7 @@ const LogisticaPage = () => {
 
   const fetchSedes = async () => {
     try {
-      const response = await fetch('https://worcester-alex-despite-facts.trycloudflare.com/api/sedes');
+      const response = await fetch('https://option-laden-investigator-careful.trycloudflare.com/api/sedes');
       const data = await response.json();
       const content = data.content || data;
       setSedes(content);
@@ -54,7 +54,7 @@ const LogisticaPage = () => {
   const fetchInventario = async () => {
     setLoadingInv(true);
     try {
-      const response = await fetch('https://worcester-alex-despite-facts.trycloudflare.com/api/inventario');
+      const response = await fetch('https://option-laden-investigator-careful.trycloudflare.com/api/inventario');
       const data = await response.json();
       const content = data.content || data;
       setInventario(Array.isArray(content) ? content.filter(item => item.stock > 0) : []);
@@ -67,7 +67,7 @@ const LogisticaPage = () => {
   const fetchNecesidades = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('https://worcester-alex-despite-facts.trycloudflare.com/api/necesidades', {
+      const response = await fetch('https://option-laden-investigator-careful.trycloudflare.com/api/necesidades', {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
       const data = await response.json();
@@ -122,14 +122,14 @@ const LogisticaPage = () => {
 
     try {
       if (editandoId) {
-        await fetch(`https://worcester-alex-despite-facts.trycloudflare.com/api/logistica/${editandoId}`, {
+        await fetch(`https://option-laden-investigator-careful.trycloudflare.com/api/logistica/${editandoId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(envioData)
         });
         alert("¡Envío actualizado correctamente!");
       } else {
-        await fetch('https://worcester-alex-despite-facts.trycloudflare.com/api/logistica', {
+        await fetch('https://option-laden-investigator-careful.trycloudflare.com/api/logistica', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...envioData, estado })
@@ -178,7 +178,7 @@ const LogisticaPage = () => {
     
     if (window.confirm(msg)) {
       try {
-        await fetch(`https://worcester-alex-despite-facts.trycloudflare.com/api/logistica/${envio.id}`, { method: 'DELETE' });
+        await fetch(`https://option-laden-investigator-careful.trycloudflare.com/api/logistica/${envio.id}`, { method: 'DELETE' });
         fetchLogistica();
         fetchInventario();
         alert("Envío eliminado.");
@@ -191,7 +191,7 @@ const LogisticaPage = () => {
   const marcarEntregado = async (id) => {
     if (window.confirm("¿Marcar este envío como ENTREGADO? Se descontará del inventario automáticamente.")) {
       try {
-        await fetch(`https://worcester-alex-despite-facts.trycloudflare.com/api/logistica/${id}/estado`, {
+        await fetch(`https://option-laden-investigator-careful.trycloudflare.com/api/logistica/${id}/estado`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ estado: 'ENTREGADO' })

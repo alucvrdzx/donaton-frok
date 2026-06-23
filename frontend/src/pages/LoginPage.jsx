@@ -17,7 +17,7 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      const res = await fetch('https://worcester-alex-despite-facts.trycloudflare.com/api/auth/login', {
+      const res = await fetch('https://option-laden-investigator-careful.trycloudflare.com/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ correo, clave })
